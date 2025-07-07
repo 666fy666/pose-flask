@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}肩关节体格检查系统{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- 自定义样式 -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-heartbeat me-2"></i>
+                肩关节体格检查系统
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home me-1"></i>首页
+                        </a>
+                    </li>
+                    {% if session.user_id %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('data_management') }}">
+                            <i class="fas fa-database me-1"></i>数据管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('ai_video') }}">
+                            <i class="fas fa-video me-1"></i>AI分析
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    {% if session.user_id %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i>{{ session.user_name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
+                                    <i class="fas fa-user me-2"></i>个人资料
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                                    <i class="fas fa-cog me-2"></i>系统设置
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>退出登录
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>登录
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('register') }}">
+                            <i class="fas fa-user-plus me-1"></i>注册
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 页脚 -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <p class="footer-text">
+                    © 2024 肩关节体格检查系统 | 上海市第六人民医院运行医学科 | AI医疗团队
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 个人资料模态框 -->
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user me-2"></i>个人资料
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-user-circle fa-5x text-primary"></i>
+                            </div>
+                            <h6>{{ session.user_name }}</h6>
+                            <small class="text-muted">{{ session.user_role }}</small>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">用户名</label>
+                                <input type="text" class="form-control" value="{{ session.username }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">邮箱</label>
+                                <input type="email" class="form-control" value="{{ session.email }}" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">注册时间</label>
+                                <input type="text" class="form-control" value="{{ session.register_time }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                        <i class="fas fa-key me-2"></i>修改密码
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密码模态框 -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-key me-2"></i>修改密码
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label">当前密码</label>
+                            <input type="password" class="form-control" id="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">新密码</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmNewPassword" class="form-label">确认新密码</label>
+                            <input type="password" class="form-control" id="confirmNewPassword" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="savePasswordBtn">
+                        <i class="fas fa-save me-2"></i>保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统设置模态框 -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-cog me-2"></i>系统设置
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="systemSettingsForm">
+                        <div class="mb-3">
+                            <label for="themeSelect" class="form-label">主题设置</label>
+                            <select class="form-select" id="themeSelect">
+                                <option value="light">浅色主题</option>
+                                <option value="dark">深色主题</option>
+                                <option value="auto">跟随系统</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="languageSelect" class="form-label">语言设置</label>
+                            <select class="form-select" id="languageSelect">
+                                <option value="zh-CN">简体中文</option>
+                                <option value="en-US">English</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="pageSizeSelect" class="form-label">每页显示数量</label>
+                            <select class="form-select" id="pageSizeSelect">
+                                <option value="10">10条</option>
+                                <option value="20" selected>20条</option>
+                                <option value="50">50条</option>
+                                <option value="100">100条</option>
+                            </select>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="autoSave" checked>
+                            <label class="form-check-label" for="autoSave">
+                                自动保存
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notifications" checked>
+                            <label class="form-check-label" for="notifications">
+                                启用通知
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveSettingsBtn">
+                        <i class="fas fa-save me-2"></i>保存设置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全局消息提示 -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div id="globalToast" class="toast" role="alert">
+            <div class="toast-header">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong class="me-auto">系统提示</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                操作成功！
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载指示器 -->
+    <div id="loadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="background: rgba(0,0,0,0.5); z-index: 9999;">
+        <div class="d-flex justify-content-center align-items-center h-100">
+            <div class="text-center text-white">
+                <div class="loading mb-3"></div>
+                <p id="loadingText">正在处理，请稍候...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- 全局JavaScript -->
+    <script>
+        // 全局变量
+        window.APP_CONFIG = {
+            baseUrl: '{{ request.url_root }}',
+            csrfToken: '{{ csrf_token() if csrf_token else "" }}',
+            userInfo: {
+                id: '{{ session.user_id if session.user_id else "" }}',
+                name: '{{ session.user_name if session.user_name else "" }}',
+                role: '{{ session.user_role if session.user_role else "" }}'
+            }
+        };
+
+        // 全局函数
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('globalToast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            toast.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info');
+            toast.classList.add(`bg-${type}`);
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+
+        function showLoading(text = '正在处理，请稍候...') {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').classList.remove('d-none');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('d-none');
+        }
+
+        // 页面加载完成后的初始化
+        $(document).ready(function() {
+            // 自动隐藏警告消息
+            setTimeout(function() {
+                $('.alert').fadeOut();
+            }, 5000);
+
+            // 修改密码功能
+            $('#savePasswordBtn').click(function() {
+                const currentPassword = $('#currentPassword').val();
+                const newPassword = $('#newPassword').val();
+                const confirmPassword = $('#confirmNewPassword').val();
+
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                    showToast('请填写所有密码字段', 'warning');
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    showToast('新密码与确认密码不匹配', 'danger');
+                    return;
+                }
+
+                if (newPassword.length < 6) {
+                    showToast('新密码长度至少6个字符', 'warning');
+                    return;
+                }
+
+                // 发送修改密码请求
+                $.ajax({
+                    url: '/api/change_password',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            showToast('密码修改成功', 'success');
+                            $('#changePasswordModal').modal('hide');
+                            $('#changePasswordForm')[0].reset();
+                        } else {
+                            showToast(response.message || '密码修改失败', 'danger');
+                        }
+                    },
+                    error: function() {
+                        showToast('密码修改失败，请重试', 'danger');
+                    }
+                });
+            });
+
+            // 保存系统设置
+            $('#saveSettingsBtn').click(function() {
+                const settings = {
+                    theme: $('#themeSelect').val(),
+                    language: $('#languageSelect').val(),
+                    pageSize: $('#pageSizeSelect').val(),
+                    autoSave: $('#autoSave').is(':checked'),
+                    notifications: $('#notifications').is(':checked')
+                };
+
+                // 保存设置到localStorage
+                localStorage.setItem('systemSettings', JSON.stringify(settings));
+                showToast('设置保存成功', 'success');
+                $('#settingsModal').modal('hide');
+            });
+
+            // 加载系统设置
+            const savedSettings = localStorage.getItem('systemSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                $('#themeSelect').val(settings.theme);
+                $('#languageSelect').val(settings.language);
+                $('#pageSizeSelect').val(settings.pageSize);
+                $('#autoSave').prop('checked', settings.autoSave);
+                $('#notifications').prop('checked', settings.notifications);
+            }
+
+            // 主题切换
+            $('#themeSelect').change(function() {
+                const theme = $(this).val();
+                document.body.className = theme === 'dark' ? 'dark-theme' : '';
+            });
+
+            // 键盘快捷键
+            $(document).keydown(function(e) {
+                // Ctrl + S: 保存
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    $('form:visible button[type="submit"]').click();
+                }
+                
+                // Ctrl + Enter: 提交表单
+                if (e.ctrlKey && e.key === 'Enter') {
+                    e.preventDefault();
+                    $('form:visible button[type="submit"]').click();
+                }
+            });
+
+            // 添加页面加载动画
+            $('body').addClass('fade-in-up');
+        });
+
+        // AJAX全局设置
+        $.ajaxSetup({
+            beforeSend: function(xhr) {
+                if (window.APP_CONFIG.csrfToken) {
+                    xhr.setRequestHeader('X-CSRFToken', window.APP_CONFIG.csrfToken);
+                }
+            },
+            error: function(xhr, status, error) {
+                if (xhr.status === 401) {
+                    showToast('登录已过期，请重新登录', 'warning');
+                    setTimeout(function() {
+                        window.location.href = '/login';
+                    }, 2000);
+                } else if (xhr.status === 403) {
+                    showToast('权限不足', 'danger');
+                } else if (xhr.status === 500) {
+                    showToast('服务器错误，请稍后重试', 'danger');
+                }
+            }
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

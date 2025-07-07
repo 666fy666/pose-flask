@@ -1,0 +1,23 @@
+cookie:
+  expiry_days: 1
+  key: some_signature_key
+  name: some_cookie_name
+credentials:
+  usernames:
+    rbriggs:
+      email: rbriggs@gmail.com
+      failed_login_attempts: 0
+      logged_in: false
+      name: Rebecca Briggs
+      password: password123  # 明文密码
+      role: user
+    tom:
+      email: jsmith@gmail.com
+      failed_login_attempts: 0
+      logged_in: true
+      name: tom
+      password: abc  # 明文密码
+      role: admin
+preauthorized:
+  emails:
+  - melsby@gmail.com

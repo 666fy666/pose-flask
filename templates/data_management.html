@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block title %}数据管理 - 肩关节体格检查系统{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- 页面标题区域 -->
+    <section class="hero-section" style="padding: 80px 0 60px;">
+        <div class="hero-content">
+            <h1 class="hero-title">数据管理</h1>
+            <p class="hero-subtitle">患者信息管理与数据分析</p>
+            <p class="hero-description">
+                完整的数据管理功能，支持患者信息的录入、查询、编辑和导出，
+                为医疗诊断提供可靠的数据支持。
+            </p>
+        </div>
+    </section>
+
+    <!-- 主要内容区域 -->
+    <section class="data-section">
+        <div class="container">
+            <!-- 标签页导航 -->
+            <ul class="nav nav-tabs" id="dataTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="patients-tab" data-bs-toggle="tab" data-bs-target="#patients" type="button" role="tab">
+                        <i class="fas fa-users me-2"></i>患者管理
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="add-tab" data-bs-toggle="tab" data-bs-target="#add" type="button" role="tab">
+                        <i class="fas fa-plus me-2"></i>添加患者
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="export-tab" data-bs-toggle="tab" data-bs-target="#export" type="button" role="tab">
+                        <i class="fas fa-download me-2"></i>数据导出
+                    </button>
+                </li>
+            </ul>
+
+            <!-- 标签页内容 -->
+            <div class="tab-content" id="dataTabsContent">
+                <!-- 患者管理标签页 -->
+                <div class="tab-pane fade show active" id="patients" role="tabpanel">
+                    <div class="row">
+                        <div class="col-12">
+                            <!-- 搜索和筛选区域 -->
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label for="searchName" class="form-label">
+                                                <i class="fas fa-search me-2"></i>姓名搜索
+                                            </label>
+                                            <input type="text" class="form-control" id="searchName" placeholder="输入患者姓名">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="filterGender" class="form-label">
+                                                <i class="fas fa-venus-mars me-2"></i>性别筛选
+                                            </label>
+                                            <select class="form-select" id="filterGender">
+                                                <option value="">全部</option>
+                                                <option value="男">男</option>
+                                                <option value="女">女</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="filterAge" class="form-label">
+                                                <i class="fas fa-birthday-cake me-2"></i>年龄范围
+                                            </label>
+                                            <select class="form-select" id="filterAge">
+                                                <option value="">全部</option>
+                                                <option value="0-18">0-18岁</option>
+                                                <option value="19-30">19-30岁</option>
+                                                <option value="31-50">31-50岁</option>
+                                                <option value="51-70">51-70岁</option>
+                                                <option value="71+">71岁以上</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">&nbsp;</label>
+                                            <button class="btn btn-primary w-100" id="searchBtn">
+                                                <i class="fas fa-search me-2"></i>搜索
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 患者列表 -->
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-list me-2"></i>患者列表
+                                    </h5>
+                                    <div>
+                                        <button class="btn btn-outline-primary btn-sm" id="refreshBtn">
+                                            <i class="fas fa-sync-alt me-1"></i>刷新
+                                        </button>
+                                        <button class="btn btn-outline-success btn-sm ms-2" id="exportSelectedBtn">
+                                            <i class="fas fa-download me-1"></i>导出选中
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="patientsTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        <input type="checkbox" id="selectAll">
+                                                    </th>
+                                                    <th>ID</th>
+                                                    <th>姓名</th>
+                                                    <th>性别</th>
+                                                    <th>年龄</th>
+                                                    <th>身高(cm)</th>
+                                                    <th>体重(kg)</th>
+                                                    <th>BMI</th>
+                                                    <th>诊断</th>
+                                                    <th>操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="patientsTableBody">
+                                                <!-- 数据将通过JavaScript动态加载 -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    <!-- 分页控件 -->
+                                    <nav aria-label="患者列表分页">
+                                        <ul class="pagination justify-content-center" id="pagination">
+                                            <!-- 分页将通过JavaScript动态生成 -->
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 添加患者标签页 -->
+                <div class="tab-pane fade" id="add" role="tabpanel">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-user-plus me-2"></i>添加新患者
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="addPatientForm">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label for="name" class="form-label">
+                                                    <i class="fas fa-user me-2"></i>姓名
+                                                </label>
+                                                <input type="text" class="form-control" id="name" name="name" required>
+                                            </div>
+                                            
+                                            <div class="col-md-6">
+                                                <label for="gender" class="form-label">
+                                                    <i class="fas fa-venus-mars me-2"></i>性别
+                                                </label>
+                                                <select class="form-select" id="gender" name="gender" required>
+                                                    <option value="">请选择</option>
+                                                    <option value="男">男</option>
+                                                    <option value="女">女</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <div class="col-md-4">
+                                                <label for="age" class="form-label">
+                                                    <i class="fas fa-birthday-cake me-2"></i>年龄
+                                                </label>
+                                                <input type="number" class="form-control" id="age" name="age" min="0" max="150" required>
+                                            </div>
+                                            
+                                            <div class="col-md-4">
+                                                <label for="height" class="form-label">
+                                                    <i class="fas fa-ruler-vertical me-2"></i>身高(cm)
+                                                </label>
+                                                <input type="number" class="form-control" id="height" name="height" min="50" max="300" step="0.1" required>
+                                            </div>
+                                            
+                                            <div class="col-md-4">
+                                                <label for="weight" class="form-label">
+                                                    <i class="fas fa-weight me-2"></i>体重(kg)
+                                                </label>
+                                                <input type="number" class="form-control" id="weight" name="weight" min="10" max="500" step="0.1" required>
+                                            </div>
+                                            
+                                            <div class="col-12">
+                                                <label for="diagnosis" class="form-label">
+                                                    <i class="fas fa-stethoscope me-2"></i>诊断
+                                                </label>
+                                                <textarea class="form-control" id="diagnosis" name="diagnosis" rows="3" placeholder="请输入诊断信息"></textarea>
+                                            </div>
+                                            
+                                            <div class="col-12">
+                                                <label for="notes" class="form-label">
+                                                    <i class="fas fa-notes-medical me-2"></i>备注
+                                                </label>
+                                                <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="请输入备注信息"></textarea>
+                                            </div>
+                                            
+                                            <div class="col-12">
+                                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                                    <button type="reset" class="btn btn-secondary">
+                                                        <i class="fas fa-undo me-2"></i>重置
+                                                    </button>
+                                                    <button type="submit" class="btn btn-primary">
+                                                        <i class="fas fa-save me-2"></i>保存患者
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据导出标签页 -->
+                <div class="tab-pane fade" id="export" role="tabpanel">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-download me-2"></i>数据导出
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-4">
+                                        <div class="col-md-6">
+                                            <div class="card h-100">
+                                                <div class="card-body text-center">
+                                                    <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
+                                                    <h5 class="card-title">导出Excel</h5>
+                                                    <p class="card-text">将所有患者数据导出为Excel格式</p>
+                                                    <button class="btn btn-success" id="exportExcelBtn">
+                                                        <i class="fas fa-download me-2"></i>导出Excel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="card h-100">
+                                                <div class="card-body text-center">
+                                                    <i class="fas fa-file-csv fa-3x text-info mb-3"></i>
+                                                    <h5 class="card-title">导出CSV</h5>
+                                                    <p class="card-text">将患者数据导出为CSV格式</p>
+                                                    <button class="btn btn-info" id="exportCsvBtn">
+                                                        <i class="fas fa-download me-2"></i>导出CSV
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="card h-100">
+                                                <div class="card-body text-center">
+                                                    <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                                                    <h5 class="card-title">导出PDF</h5>
+                                                    <p class="card-text">生成患者数据报告PDF</p>
+                                                    <button class="btn btn-danger" id="exportPdfBtn">
+                                                        <i class="fas fa-download me-2"></i>导出PDF
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-6">
+                                            <div class="card h-100">
+                                                <div class="card-body text-center">
+                                                    <i class="fas fa-database fa-3x text-warning mb-3"></i>
+                                                    <h5 class="card-title">数据库备份</h5>
+                                                    <p class="card-text">备份完整的数据库文件</p>
+                                                    <button class="btn btn-warning" id="backupDbBtn">
+                                                        <i class="fas fa-download me-2"></i>备份数据库
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- 编辑患者模态框 -->
+<div class="modal fade" id="editPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>编辑患者信息
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPatientForm">
+                    <input type="hidden" id="editPatientId" name="id">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="editName" class="form-label">姓名</label>
+                            <input type="text" class="form-control" id="editName" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editGender" class="form-label">性别</label>
+                            <select class="form-select" id="editGender" name="gender" required>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="editAge" class="form-label">年龄</label>
+                            <input type="number" class="form-control" id="editAge" name="age" min="0" max="150" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="editHeight" class="form-label">身高(cm)</label>
+                            <input type="number" class="form-control" id="editHeight" name="height" min="50" max="300" step="0.1" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="editWeight" class="form-label">体重(kg)</label>
+                            <input type="number" class="form-control" id="editWeight" name="weight" min="10" max="500" step="0.1" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="editDiagnosis" class="form-label">诊断</label>
+                            <textarea class="form-control" id="editDiagnosis" name="diagnosis" rows="3"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label for="editNotes" class="form-label">备注</label>
+                            <textarea class="form-control" id="editNotes" name="notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveEditBtn">
+                    <i class="fas fa-save me-2"></i>保存修改
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>确认删除
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>您确定要删除患者 <strong id="deletePatientName"></strong> 的信息吗？</p>
+                <p class="text-muted">此操作不可撤销，请谨慎操作。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>确认删除
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/data_management.js') }}"></script>
+{% endblock %} 

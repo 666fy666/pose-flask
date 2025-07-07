@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}注册 - 肩关节体格检查系统{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="text-center mb-4">
+            <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+            <h1 class="auth-title">创建账户</h1>
+            <p class="text-muted">注册新账户以使用系统功能</p>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'info-circle' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="{{ url_for('register') }}" id="registerForm">
+            <div class="mb-3">
+                <label for="username" class="form-label">
+                    <i class="fas fa-user me-2"></i>用户名
+                </label>
+                <input type="text" class="form-control" id="username" name="username" required 
+                       placeholder="请输入用户名" autocomplete="username">
+                <div class="form-text">用户名长度3-20个字符，只能包含字母、数字和下划线</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="password" class="form-label">
+                    <i class="fas fa-lock me-2"></i>密码
+                </label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="password" name="password" required 
+                           placeholder="请输入密码" autocomplete="new-password">
+                    <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                        <i class="fas fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+                <div class="form-text">密码长度至少6个字符</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="confirm_password" class="form-label">
+                    <i class="fas fa-lock me-2"></i>确认密码
+                </label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required 
+                           placeholder="请再次输入密码" autocomplete="new-password">
+                    <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                        <i class="fas fa-eye" id="confirmEyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">
+                    <i class="fas fa-envelope me-2"></i>邮箱地址
+                </label>
+                <input type="email" class="form-control" id="email" name="email" required 
+                       placeholder="请输入邮箱地址" autocomplete="email">
+            </div>
+            
+            <div class="mb-3">
+                <label for="full_name" class="form-label">
+                    <i class="fas fa-id-card me-2"></i>真实姓名
+                </label>
+                <input type="text" class="form-control" id="full_name" name="full_name" required 
+                       placeholder="请输入真实姓名" autocomplete="name">
+            </div>
+            
+            <div class="mb-3">
+                <label for="role" class="form-label">
+                    <i class="fas fa-user-tag me-2"></i>用户角色
+                </label>
+                <select class="form-select" id="role" name="role" required>
+                    <option value="">请选择用户角色</option>
+                    <option value="doctor">医生</option>
+                    <option value="nurse">护士</option>
+                    <option value="researcher">研究员</option>
+                    <option value="admin">管理员</option>
+                </select>
+            </div>
+            
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="agree" name="agree" required>
+                <label class="form-check-label" for="agree">
+                    我同意
+                    <a href="#" class="text-primary text-decoration-none" data-bs-toggle="modal" data-bs-target="#termsModal">
+                        服务条款
+                    </a>
+                    和
+                    <a href="#" class="text-primary text-decoration-none" data-bs-toggle="modal" data-bs-target="#privacyModal">
+                        隐私政策
+                    </a>
+                </label>
+            </div>
+            
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-large">
+                    <i class="fas fa-user-plus me-2"></i>注册账户
+                </button>
+            </div>
+        </form>
+        
+        <div class="text-center mt-4">
+            <p class="text-muted mb-0">
+                已有账户？
+                <a href="{{ url_for('login') }}" class="text-primary text-decoration-none">
+                    立即登录
+                </a>
+            </p>
+        </div>
+        
+        <div class="text-center mt-3">
+            <a href="{{ url_for('index') }}" class="text-muted text-decoration-none">
+                <i class="fas fa-arrow-left me-1"></i>返回首页
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 服务条款模态框 -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">服务条款</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. 服务说明</h6>
+                <p>本系统为医疗专业人员提供肩关节体格检查运动学客观化评估服务。</p>
+                
+                <h6>2. 用户责任</h6>
+                <p>用户应确保提供的信息真实准确，并遵守相关法律法规。</p>
+                
+                <h6>3. 隐私保护</h6>
+                <p>我们将严格保护用户隐私和患者数据安全。</p>
+                
+                <h6>4. 免责声明</h6>
+                <p>本系统提供的分析结果仅供参考，具体诊断请咨询专业医生。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 隐私政策模态框 -->
+<div class="modal fade" id="privacyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">隐私政策</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. 信息收集</h6>
+                <p>我们仅收集必要的用户信息和患者数据用于系统功能。</p>
+                
+                <h6>2. 信息使用</h6>
+                <p>收集的信息仅用于系统功能，不会用于其他商业目的。</p>
+                
+                <h6>3. 信息保护</h6>
+                <p>采用加密技术保护数据传输和存储安全。</p>
+                
+                <h6>4. 信息共享</h6>
+                <p>未经用户同意，不会向第三方分享用户信息。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 密码显示/隐藏切换
+    $('#togglePassword').click(function() {
+        const passwordField = $('#password');
+        const eyeIcon = $('#eyeIcon');
+        
+        if (passwordField.attr('type') === 'password') {
+            passwordField.attr('type', 'text');
+            eyeIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+        } else {
+            passwordField.attr('type', 'password');
+            eyeIcon.removeClass('fa-eye-slash').addClass('fa-eye');
+        }
+    });
+    
+    $('#toggleConfirmPassword').click(function() {
+        const passwordField = $('#confirm_password');
+        const eyeIcon = $('#confirmEyeIcon');
+        
+        if (passwordField.attr('type') === 'password') {
+            passwordField.attr('type', 'text');
+            eyeIcon.removeClass('fa-eye').addClass('fa-eye-slash');
+        } else {
+            passwordField.attr('type', 'password');
+            eyeIcon.removeClass('fa-eye-slash').addClass('fa-eye');
+        }
+    });
+    
+    // 表单验证
+    $('#registerForm').submit(function(e) {
+        const username = $('#username').val().trim();
+        const password = $('#password').val();
+        const confirmPassword = $('#confirm_password').val();
+        const email = $('#email').val().trim();
+        const fullName = $('#full_name').val().trim();
+        const role = $('#role').val();
+        const agree = $('#agree').is(':checked');
+        
+        // 清除之前的错误提示
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').remove();
+        
+        let hasError = false;
+        
+        // 用户名验证
+        if (!username) {
+            showError('#username', '请输入用户名');
+            hasError = true;
+        } else if (username.length < 3 || username.length > 20) {
+            showError('#username', '用户名长度必须在3-20个字符之间');
+            hasError = true;
+        } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+            showError('#username', '用户名只能包含字母、数字和下划线');
+            hasError = true;
+        }
+        
+        // 密码验证
+        if (!password) {
+            showError('#password', '请输入密码');
+            hasError = true;
+        } else if (password.length < 6) {
+            showError('#password', '密码长度至少6个字符');
+            hasError = true;
+        }
+        
+        // 确认密码验证
+        if (!confirmPassword) {
+            showError('#confirm_password', '请确认密码');
+            hasError = true;
+        } else if (password !== confirmPassword) {
+            showError('#confirm_password', '两次输入的密码不一致');
+            hasError = true;
+        }
+        
+        // 邮箱验证
+        if (!email) {
+            showError('#email', '请输入邮箱地址');
+            hasError = true;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            showError('#email', '请输入有效的邮箱地址');
+            hasError = true;
+        }
+        
+        // 姓名验证
+        if (!fullName) {
+            showError('#full_name', '请输入真实姓名');
+            hasError = true;
+        }
+        
+        // 角色验证
+        if (!role) {
+            showError('#role', '请选择用户角色');
+            hasError = true;
+        }
+        
+        // 同意条款验证
+        if (!agree) {
+            alert('请同意服务条款和隐私政策');
+            hasError = true;
+        }
+        
+        if (hasError) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // 显示加载状态
+        const submitBtn = $(this).find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        submitBtn.html('<span class="loading me-2"></span>注册中...');
+        submitBtn.prop('disabled', true);
+        
+        // 5秒后恢复按钮状态（防止无限加载）
+        setTimeout(function() {
+            submitBtn.html(originalText);
+            submitBtn.prop('disabled', false);
+        }, 5000);
+    });
+    
+    function showError(selector, message) {
+        $(selector).addClass('is-invalid');
+        $(selector).after('<div class="invalid-feedback">' + message + '</div>');
+    }
+    
+    // 自动聚焦用户名输入框
+    $('#username').focus();
+});
+</script>
+{% endblock %} 

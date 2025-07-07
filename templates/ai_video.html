@@ -1,0 +1,629 @@
+{% extends "base.html" %}
+
+{% block title %}AI视频分析 - 肩关节体格检查系统{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- 页面标题区域 -->
+    <section class="hero-section" style="padding: 80px 0 60px;">
+        <div class="hero-content">
+            <h1 class="hero-title">AI视频分析</h1>
+            <p class="hero-subtitle">智能人体关键点检测与运动学分析</p>
+            <p class="hero-description">
+                基于先进的AI技术，对人体关键点进行精确检测和分析，
+                为医疗诊断提供科学、客观的运动学评估数据。系统能够精确检测人体的17个关键点，包括头部、肩部、肘部、腕部、髋部、膝部和脚踝等，
+                通过深度学习算法提供准确的人体姿态分析。支持多角度视频综合分析.
+            </p>
+        </div>
+    </section>
+
+    <!-- 主要内容区域 -->
+    <section class="data-section">
+        <div class="container">
+            <!-- 患者选择区域 -->
+            <div class="row mb-5">
+                <div class="col-lg-10 mx-auto">
+                    <div class="card" id="patientSelectionCard">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user-injured me-2"></i>患者选择
+                            </h5>
+                            <p class="text-muted mb-0">请先选择要进行AI视频分析的患者</p>
+                        </div>
+                        <div class="card-body">
+                            <!-- 未选择患者时的提示 -->
+                            <div id="noPatientSelected" class="text-center py-4">
+                                <div class="patient-selection-prompt">
+                                    <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                                    <h4 class="text-warning mb-3">请先选择患者</h4>
+                                    <p class="text-muted mb-4">在进行AI视频分析之前，需要先选择或创建患者记录</p>
+                                    <div class="d-flex justify-content-center gap-3">
+                                        <button class="btn btn-primary btn-lg" id="selectPatientBtn">
+                                            <i class="fas fa-user-plus me-2"></i>选择患者
+                                        </button>
+                                        <button class="btn btn-outline-primary btn-lg" id="createPatientBtn">
+                                            <i class="fas fa-plus me-2"></i>新建患者
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 已选择患者时的信息显示 -->
+                            <div id="patientSelected" class="d-none">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <div id="patientSelectionArea">
+                                            <div class="d-flex align-items-center">
+                                                <div class="patient-avatar me-3">
+                                                    <i class="fas fa-user-circle fa-2x text-primary"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1 text-primary">当前选择患者</h6>
+                                                    <p class="text-muted mb-0" id="selectedPatientInfo">
+                                                        请选择患者以开始AI视频分析
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <button class="btn btn-outline-primary" id="changePatientBtn">
+                                            <i class="fas fa-exchange-alt me-2"></i>更换患者
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 功能说明卡片 -->
+            <!--div class="row mb-5">
+                <div class="col-lg-8 mx-auto">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="feature-icon mb-3">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <h4 class="card-title">AI检测能力</h4>
+                            <p class="card-text">
+                                系统能够精确检测人体的17个关键点，包括头部、肩部、肘部、腕部、髋部、膝部和脚踝等，
+                                通过深度学习算法提供准确的人体姿态分析。支持多角度视频综合分析。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 多角度视频上传区域 -->
+            <div class="row mb-5">
+                <div class="col-lg-10 mx-auto">
+                    <div class="card">
+                        <div class="card-header" id="videoUploadHeader" style="cursor: pointer;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-camera me-2"></i>多角度视频上传
+                                    </h5>
+                                    <p class="text-muted mb-0" id="uploadStatusText">请上传正面、侧面、背面三个角度的视频进行综合分析</p>
+                                </div>
+                                <div>
+                                    <i class="fas fa-chevron-down" id="uploadToggleIcon"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body" id="videoUploadBody">
+                            <div class="row g-4">
+                                <!-- 正面视频上传 -->
+                                <div class="col-md-4">
+                                    <div class="upload-card" id="frontUploadCard">
+                                        <div class="upload-card-header">
+                                            <i class="fas fa-user me-2"></i>
+                                            <span>正面视频</span>
+                                            <span class="upload-status" id="frontStatus">未上传</span>
+                                        </div>
+                                        <div class="upload-area-small" id="frontUploadArea" onclick="document.getElementById('frontVideoFile').click()">
+                                            <div class="upload-icon-small">
+                                                <i class="fas fa-video"></i>
+                                            </div>
+                                            <p class="upload-text">点击上传正面视频</p>
+                                            <input type="file" id="frontVideoFile" accept="video/*" style="display: none;" data-angle="front">
+                                        </div>
+                                        <div class="upload-progress-small" id="frontProgress" style="display: none;">
+                                            <div class="progress">
+                                                <div class="progress-bar" id="frontProgressBar" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            <small id="frontProgressText">0%</small>
+                                        </div>
+                                        <div class="upload-actions" id="frontActions" style="display: none;">
+                                            <button class="btn btn-sm btn-outline-primary me-2" onclick="document.getElementById('frontVideoFile').click()">
+                                                <i class="fas fa-upload me-1"></i>重新上传
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteVideo('front')">
+                                                <i class="fas fa-trash me-1"></i>删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 侧面视频上传 -->
+                                <div class="col-md-4">
+                                    <div class="upload-card" id="sideUploadCard">
+                                        <div class="upload-card-header">
+                                            <i class="fas fa-user-friends me-2"></i>
+                                            <span>侧面视频</span>
+                                            <span class="upload-status" id="sideStatus">未上传</span>
+                                        </div>
+                                        <div class="upload-area-small" id="sideUploadArea" onclick="document.getElementById('sideVideoFile').click()">
+                                            <div class="upload-icon-small">
+                                                <i class="fas fa-video"></i>
+                                            </div>
+                                            <p class="upload-text">点击上传侧面视频</p>
+                                            <input type="file" id="sideVideoFile" accept="video/*" style="display: none;" data-angle="side">
+                                        </div>
+                                        <div class="upload-progress-small" id="sideProgress" style="display: none;">
+                                            <div class="progress">
+                                                <div class="progress-bar" id="sideProgressBar" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            <small id="sideProgressText">0%</small>
+                                        </div>
+                                        <div class="upload-actions" id="sideActions" style="display: none;">
+                                            <button class="btn btn-sm btn-outline-primary me-2" onclick="document.getElementById('sideVideoFile').click()">
+                                                <i class="fas fa-upload me-1"></i>重新上传
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteVideo('side')">
+                                                <i class="fas fa-trash me-1"></i>删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 背面视频上传 -->
+                                <div class="col-md-4">
+                                    <div class="upload-card" id="backUploadCard">
+                                        <div class="upload-card-header">
+                                            <i class="fas fa-user-tie me-2"></i>
+                                            <span>背面视频</span>
+                                            <span class="upload-status" id="backStatus">未上传</span>
+                                        </div>
+                                        <div class="upload-area-small" id="backUploadArea" onclick="document.getElementById('backVideoFile').click()">
+                                            <div class="upload-icon-small">
+                                                <i class="fas fa-video"></i>
+                                            </div>
+                                            <p class="upload-text">点击上传背面视频</p>
+                                            <input type="file" id="backVideoFile" accept="video/*" style="display: none;" data-angle="back">
+                                        </div>
+                                        <div class="upload-progress-small" id="backProgress" style="display: none;">
+                                            <div class="progress">
+                                                <div class="progress-bar" id="backProgressBar" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            <small id="backProgressText">0%</small>
+                                        </div>
+                                        <div class="upload-actions" id="backActions" style="display: none;">
+                                            <button class="btn btn-sm btn-outline-primary me-2" onclick="document.getElementById('backVideoFile').click()">
+                                                <i class="fas fa-upload me-1"></i>重新上传
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteVideo('back')">
+                                                <i class="fas fa-trash me-1"></i>删除
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 批量上传按钮 -->
+                            <div class="text-center mt-4">
+                                <button class="btn btn-outline-primary" id="batchUploadBtn">
+                                    <i class="fas fa-folder-open me-2"></i>批量选择文件
+                                </button>
+                            </div>
+
+                            <!-- 上传说明 -->
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>上传说明：</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>支持 MP4, AVI, MOV 格式，单个文件大小不超过 100MB</li>
+                                    <li>建议三个角度视频时长一致，便于同步分析</li>
+                                    <li>视频质量建议不低于 720p，帧率不低于 15fps</li>
+                                    <li>确保视频中人体完整可见，光线充足</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 视频预览区域 -->
+            <div class="row mb-5" id="videoPreviewSection" style="display: none;">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-eye me-2"></i>视频预览
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="video-preview-card">
+                                        <h6 class="video-preview-title">
+                                            <i class="fas fa-user me-2"></i>正面视频
+                                        </h6>
+                                        <video id="frontVideoPreview" class="video-preview-small" controls>
+                                            您的浏览器不支持视频播放。
+                                        </video>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="video-preview-card">
+                                        <h6 class="video-preview-title">
+                                            <i class="fas fa-user-friends me-2"></i>侧面视频
+                                        </h6>
+                                        <video id="sideVideoPreview" class="video-preview-small" controls>
+                                            您的浏览器不支持视频播放。
+                                        </video>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="video-preview-card">
+                                        <h6 class="video-preview-title">
+                                            <i class="fas fa-user-tie me-2"></i>背面视频
+                                        </h6>
+                                        <video id="backVideoPreview" class="video-preview-small" controls>
+                                            您的浏览器不支持视频播放。
+                                        </video>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 开始分析按钮 -->
+                            <div class="text-center mt-4">
+                                <button class="btn btn-primary btn-lg" id="startMultiAnalysisBtn" disabled>
+                                    <i class="fas fa-play me-2"></i>开始综合分析
+                                </button>
+                                <p class="text-muted mt-2" id="analysisStatusText">请确保所有视频都已上传完成</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分析控制区域 -->
+            <div class="row mb-5" id="analysisControlSection" style="display: none;">
+                <div class="col-lg-8 mx-auto">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cogs me-2"></i>分析控制
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="analysisType" class="form-label">
+                                        <i class="fas fa-tasks me-2"></i>分析类型
+                                    </label>
+                                    <select class="form-select" id="analysisType">
+                                        <option value="pose">人体姿态检测</option>
+                                        <option value="motion">运动学分析</option>
+                                        <option value="comprehensive" selected>综合分析</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="confidenceThreshold" class="form-label">
+                                        <i class="fas fa-percentage me-2"></i>置信度阈值
+                                    </label>
+                                    <input type="range" class="form-range" id="confidenceThreshold" min="0" max="100" value="50">
+                                    <div class="d-flex justify-content-between">
+                                        <small>0%</small>
+                                        <small id="confidenceValue">50%</small>
+                                        <small>100%</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                        <button class="btn btn-primary btn-large" id="startAnalysisBtn">
+                                            <i class="fas fa-play me-2"></i>开始分析
+                                        </button>
+                                        <button class="btn btn-secondary btn-large" id="stopAnalysisBtn" style="display: none;">
+                                            <i class="fas fa-stop me-2"></i>停止分析
+                                        </button>
+                                        <button class="btn btn-success btn-large" id="exportResultBtn" style="display: none;">
+                                            <i class="fas fa-download me-2"></i>导出结果
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 分析结果区域 -->
+            <div class="row mb-5" id="analysisResultSection" style="display: none;">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>综合分析结果
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-lg-4">
+                                    <div class="result-card">
+                                        <h6 class="result-card-title">
+                                            <i class="fas fa-user me-2"></i>正面分析
+                                        </h6>
+                                        <div id="frontAnalysisResult" class="result-content">
+                                            <!-- 正面分析结果 -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="result-card">
+                                        <h6 class="result-card-title">
+                                            <i class="fas fa-user-friends me-2"></i>侧面分析
+                                        </h6>
+                                        <div id="sideAnalysisResult" class="result-content">
+                                            <!-- 侧面分析结果 -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="result-card">
+                                        <h6 class="result-card-title">
+                                            <i class="fas fa-user-tie me-2"></i>背面分析
+                                        </h6>
+                                        <div id="backAnalysisResult" class="result-content">
+                                            <!-- 背面分析结果 -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 综合分析结果 -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="comprehensive-result-card">
+                                        <h6 class="comprehensive-result-title">
+                                            <i class="fas fa-chart-bar me-2"></i>综合分析评估
+                                        </h6>
+                                        <div id="comprehensiveAnalysisResult" class="comprehensive-result-content">
+                                            <!-- 综合分析结果 -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史分析记录 -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-history me-2"></i>历史分析记录
+                            </h5>
+                            <button class="btn btn-outline-primary btn-sm" id="refreshHistoryBtn">
+                                <i class="fas fa-sync-alt me-1"></i>刷新
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="historyTable">
+                                    <thead>
+                                        <tr>
+                                            <th>时间</th>
+                                            <th>文件名</th>
+                                            <th>分析类型</th>
+                                            <th>状态</th>
+                                            <th>置信度</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyTableBody">
+                                        <!-- 历史记录将通过JavaScript动态加载 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- 分析结果模态框 -->
+<div class="modal fade" id="resultModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-line me-2"></i>分析结果详情
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalResultContent">
+                    <!-- 模态框内容将通过JavaScript动态加载 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="saveResultBtn">
+                    <i class="fas fa-save me-2"></i>保存结果
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 设置模态框 -->
+<div class="modal fade" id="settingsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cog me-2"></i>分析设置
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="settingsForm">
+                    <div class="mb-3">
+                        <label for="modelType" class="form-label">AI模型类型</label>
+                        <select class="form-select" id="modelType">
+                            <option value="pose">姿态检测模型</option>
+                            <option value="motion">运动分析模型</option>
+                            <option value="hybrid">混合模型</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="frameRate" class="form-label">分析帧率</label>
+                        <select class="form-select" id="frameRate">
+                            <option value="1">1 FPS</option>
+                            <option value="5">5 FPS</option>
+                            <option value="10" selected>10 FPS</option>
+                            <option value="15">15 FPS</option>
+                            <option value="30">30 FPS</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="outputFormat" class="form-label">输出格式</label>
+                        <select class="form-select" id="outputFormat">
+                            <option value="json">JSON</option>
+                            <option value="csv">CSV</option>
+                            <option value="excel">Excel</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="saveVideo" checked>
+                        <label class="form-check-label" for="saveVideo">
+                            保存分析后的视频
+                        </label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="generateReport" checked>
+                        <label class="form-check-label" for="generateReport">
+                            生成分析报告
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="saveSettingsBtn">
+                    <i class="fas fa-save me-2"></i>保存设置
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 患者选择模态框 -->
+<div class="modal fade" id="patientSelectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-injured me-2"></i>选择患者
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" id="patientSearchInput" placeholder="搜索患者姓名...">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-outline-primary w-100" id="refreshPatientsBtn">
+                            <i class="fas fa-sync-alt me-2"></i>刷新列表
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover" id="patientSelectTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>姓名</th>
+                                <th>年龄</th>
+                                <th>性别</th>
+                                <th>记录时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientSelectTableBody">
+                            <!-- 患者列表将通过JavaScript动态加载 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="noPatientsMessage" class="text-center py-4" style="display: none;">
+                    <i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">暂无患者记录</h5>
+                    <p class="text-muted">请先创建患者记录再进行AI视频分析</p>
+                    <button class="btn btn-primary" id="createPatientFromModalBtn">
+                        <i class="fas fa-plus me-2"></i>创建患者
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 患者创建提示模态框 -->
+<div class="modal fade" id="createPatientPromptModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2 text-warning"></i>需要创建患者
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                    <h5>系统检测到没有患者记录</h5>
+                    <p class="text-muted">在进行AI视频分析之前，需要先创建患者记录。</p>
+                    <p class="text-muted">患者记录将用于存储分析结果和生成报告。</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">稍后创建</button>
+                <button type="button" class="btn btn-primary" id="goToCreatePatientBtn">
+                    <i class="fas fa-plus me-2"></i>立即创建患者
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/ai_video.js') }}"></script>
+{% endblock %} 

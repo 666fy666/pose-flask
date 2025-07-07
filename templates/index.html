@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 肩关节体格检查系统{% endblock %}
+
+{% block content %}
+<!-- 英雄区域 -->
+<section class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">肩关节体格检查系统</h1>
+        <p class="hero-subtitle">基于AI的运动学客观化评估</p>
+        <p class="hero-description">
+            通过先进的AI技术，对人体关键点进行精确检测和分析，为医疗诊断提供科学依据。
+            让每一次检查都更加精准、高效。
+        </p>
+        <div class="hero-buttons">
+            <a href="{{ url_for('data_management') }}" class="btn btn-primary btn-large">
+                <i class="fas fa-database me-2"></i>开始使用
+            </a>
+            <a href="{{ url_for('ai_video') }}" class="btn btn-secondary btn-large ms-3">
+                <i class="fas fa-video me-2"></i>AI分析
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- 功能特色区域 -->
+<section class="features-section">
+    <div class="container">
+        <h2 class="section-title">核心功能</h2>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h3 class="feature-title">用户管理</h3>
+                    <p class="feature-description">
+                        支持多用户注册和权限管理，确保系统安全性。提供完整的用户认证和角色控制。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h3 class="feature-title">数据管理</h3>
+                    <p class="feature-description">
+                        完整的患者信息录入、查询和管理功能。支持数据的增删改查和导出。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="feature-title">AI分析</h3>
+                    <p class="feature-description">
+                        基于AI的人体关键点检测和运动学分析。支持多角度视频分析和实时处理。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- AI检测详情区域 -->
+<section class="data-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h2 class="section-title text-start">AI人体关键点检测</h2>
+                <p class="lead mb-4">
+                    通过先进的AI模型，精确检测人体的17个关键点，为运动学分析提供准确的数据基础。
+                </p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-circle text-primary me-2"></i>鼻子
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-circle text-primary me-2"></i>左眼、右眼
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-circle text-primary me-2"></i>左耳、右耳
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-circle text-primary me-2"></i>左肩、右肩
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-circle text-primary me-2"></i>左肘、右肘
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-circle text-primary me-2"></i>左腕、右腕
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-circle text-primary me-2"></i>左髋、右髋
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-circle text-primary me-2"></i>左膝、右膝
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-circle text-primary me-2"></i>左脚踝、右脚踝
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-robot fa-5x text-primary mb-3"></i>
+                        <h4>智能检测</h4>
+                        <p class="text-muted">实时分析，精确识别</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 快速操作区域 -->
+<section class="features-section">
+    <div class="container">
+        <h2 class="section-title">快速开始</h2>
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <h4 class="card-title">数据管理</h4>
+                        <p class="card-text">管理患者信息，录入临床数据，查看历史记录。</p>
+                        <a href="{{ url_for('data_management') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-right me-2"></i>进入管理
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <h4 class="card-title">AI视频分析</h4>
+                        <p class="card-text">上传视频文件，进行AI分析，获取运动学数据。</p>
+                        <a href="{{ url_for('ai_video') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-right me-2"></i>开始分析
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 系统信息区域 -->
+<section class="data-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h4 class="card-title mb-4">
+                            <i class="fas fa-info-circle me-2"></i>系统信息
+                        </h4>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <strong>版本</strong>
+                                    <p class="text-muted">V1.0.0</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <strong>开发单位</strong>
+                                    <p class="text-muted">上海市第六人民医院运行医学科</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <strong>技术支持</strong>
+                                    <p class="text-muted">AI医疗团队</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 添加滚动动画
+    $(window).scroll(function() {
+        $('.fade-in-up').each(function() {
+            var elementTop = $(this).offset().top;
+            var elementBottom = elementTop + $(this).outerHeight();
+            var viewportTop = $(window).scrollTop();
+            var viewportBottom = viewportTop + $(window).height();
+            
+            if (elementBottom > viewportTop && elementTop < viewportBottom) {
+                $(this).addClass('fade-in-up');
+            }
+        });
+    });
+    
+    // 初始化动画
+    $('.fade-in-up').addClass('fade-in-up');
+});
+</script>
+{% endblock %} 
