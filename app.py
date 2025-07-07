@@ -11,6 +11,7 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 import json
+import shutil
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # 请更改为安全的密钥
@@ -58,6 +59,27 @@ class Patient(db.Model):
 def load_config():
     with open('config.yaml') as file:
         return yaml.load(file, Loader=SafeLoader)
+
+def delete_patient_folder(patient):
+    """删除患者的文件夹及其所有内容"""
+    try:
+        # 创建患者文件夹名称（id-姓名格式）
+        folder_name = f"{patient.id}-{patient.username}"
+        # 移除文件夹名称中的特殊字符
+        folder_name = "".join(c for c in folder_name if c.isalnum() or c in ('-', '_'))
+        
+        folder_path = os.path.join(PATIENTS_DATA_DIR, folder_name)
+        
+        # 检查文件夹是否存在
+        if os.path.exists(folder_path):
+            # 删除整个文件夹及其内容
+            shutil.rmtree(folder_path)
+            return True, f"患者文件夹 {folder_name} 删除成功"
+        else:
+            return True, f"患者文件夹 {folder_name} 不存在，无需删除"
+            
+    except Exception as e:
+        return False, f"删除患者文件夹失败: {str(e)}"
 
 # 登录验证装饰器
 def login_required(f):
@@ -286,9 +308,27 @@ def api_patient_detail(patient_id):
 def api_delete_patient(patient_id):
     try:
         patient = Patient.query.get_or_404(patient_id)
+        
+        # 先删除患者文件夹
+        folder_deleted, folder_message = delete_patient_folder(patient)
+        
+        # 删除数据库中的患者记录
         db.session.delete(patient)
         db.session.commit()
-        return jsonify({'success': True, 'message': '患者删除成功'})
+        
+        # 返回删除结果
+        if folder_deleted:
+            return jsonify({
+                'success': True, 
+                'message': f'患者删除成功。{folder_message}'
+            })
+        else:
+            # 即使文件夹删除失败，患者记录已经删除，返回警告信息
+            return jsonify({
+                'success': True, 
+                'message': f'患者记录删除成功，但{folder_message}'
+            })
+            
     except Exception as e:
         return jsonify({'success': False, 'message': f'删除患者失败: {str(e)}'}), 500
 
@@ -712,4 +752,4 @@ def api_delete_patient_video(patient_id, filename):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True, host='0.0.0.0', port=5005) 
+    app.run(debug=True, host='0.0.0.0', port=5004) 

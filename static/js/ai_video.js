@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化页面
     initializePage();
     
+    // 页面加载时恢复患者选择状态
+    restorePatientSelection();
+    
     // 绑定事件监听器
     bindEventListeners();
 
@@ -62,6 +65,15 @@ document.addEventListener('DOMContentLoaded', function() {
             startMultiAnalysisBtn.addEventListener('click', startMultiAnalysis);
         }
         
+        // 绑定刷新预览按钮
+        const refreshVideoPreviewsBtn = document.getElementById('refreshVideoPreviewsBtn');
+        if (refreshVideoPreviewsBtn) {
+            refreshVideoPreviewsBtn.addEventListener('click', function() {
+                refreshVideoPreviews();
+                showAlert('视频预览已刷新', 'success');
+            });
+        }
+        
         // 绑定分析控制按钮
         const startAnalysisBtn = document.getElementById('startAnalysisBtn');
         const stopAnalysisBtn = document.getElementById('stopAnalysisBtn');
@@ -81,6 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectPatientBtn = document.getElementById('selectPatientBtn');
         const createPatientBtn = document.getElementById('createPatientBtn');
         const changePatientBtn = document.getElementById('changePatientBtn');
+        const clearPatientBtn = document.getElementById('clearPatientBtn');
         const refreshPatientsBtn = document.getElementById('refreshPatientsBtn');
         const createPatientFromModalBtn = document.getElementById('createPatientFromModalBtn');
         const goToCreatePatientBtn = document.getElementById('goToCreatePatientBtn');
@@ -92,7 +105,45 @@ document.addEventListener('DOMContentLoaded', function() {
             createPatientBtn.addEventListener('click', goToCreatePatient);
         }
         if (changePatientBtn) {
-            changePatientBtn.addEventListener('click', showPatientSelectModal);
+            changePatientBtn.addEventListener('click', function() {
+                // 清除当前患者选择
+                clearPatientSelection();
+                selectedPatient = null;
+                updatePatientSelectionUI();
+                showPatientSelectModal();
+            });
+        }
+        if (clearPatientBtn) {
+            clearPatientBtn.addEventListener('click', function() {
+                if (confirm('确定要清除患者选择吗？这将清除所有相关的视频和分析状态。')) {
+                    // 清除患者选择
+                    clearPatientSelection();
+                    selectedPatient = null;
+                    
+                    // 清除视频状态
+                    uploadedVideos = {
+                        front: null,
+                        side: null,
+                        back: null
+                    };
+                    
+                    // 重置界面状态
+                    updatePatientSelectionUI();
+                    updateUploadStatusText();
+                    updateAnalysisStatusText();
+                    
+                    // 隐藏视频预览区域
+                    const previewSection = document.getElementById('videoPreviewSection');
+                    if (previewSection) {
+                        previewSection.style.display = 'none';
+                    }
+                    
+                    // 展开上传卡片
+                    expandVideoUploadSection();
+                    
+                    showAlert('患者选择已清除', 'success');
+                }
+            });
         }
         if (refreshPatientsBtn) {
             refreshPatientsBtn.addEventListener('click', loadPatientsList);
@@ -110,17 +161,20 @@ document.addEventListener('DOMContentLoaded', function() {
             patientSearchInput.addEventListener('input', filterPatients);
         }
         
-        // 绑定全局selectPatient事件
-        document.addEventListener('selectPatient', function(event) {
-            const patientId = event.detail.patientId;
-            selectPatientInternal(patientId);
-        });
+
         
         // 绑定下拉式卡片点击事件
         const videoUploadHeader = document.getElementById('videoUploadHeader');
         if (videoUploadHeader) {
             videoUploadHeader.addEventListener('click', toggleVideoUploadSection);
         }
+        
+        // 页面卸载时保存状态
+        window.addEventListener('beforeunload', function() {
+            if (selectedPatient) {
+                savePatientSelection(selectedPatient);
+            }
+        });
     }
 
     function bindFileUploadEvents() {
@@ -209,6 +263,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 updateUploadStatus(angle, 'uploaded');
                 showUploadProgress(angle, false);
+                
+                // 立即更新视频预览
                 updateVideoPreview(angle, data.url);
                 
                 // 显示相应的成功消息
@@ -218,7 +274,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     showAlert(`${angle}角度视频上传成功`, 'success');
                 }
                 
+                // 检查所有视频状态并更新界面
                 checkAllVideosUploaded();
+                
+                // 强制刷新视频预览区域
+                setTimeout(() => {
+                    refreshVideoPreviews();
+                }, 100);
             } else {
                 updateUploadStatus(angle, 'error');
                 showUploadProgress(angle, false);
@@ -274,17 +336,32 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateVideoPreview(angle, url) {
         const videoElement = document.getElementById(angle + 'VideoPreview');
         if (videoElement) {
-            videoElement.src = url;
-            videoElement.load();
+            if (url) {
+                videoElement.src = url;
+                videoElement.load();
+                // 确保视频预览区域可见
+                showVideoPreviewSection();
+            } else {
+                // 清除视频预览
+                videoElement.src = '';
+                videoElement.load();
+            }
         }
     }
 
     function checkAllVideosUploaded() {
         const allUploaded = Object.values(uploadedVideos).every(video => video !== null);
+        const hasAnyVideo = Object.values(uploadedVideos).some(video => video !== null);
         const startMultiAnalysisBtn = document.getElementById('startMultiAnalysisBtn');
         
+        console.log('checkAllVideosUploaded 被调用');
+        console.log('uploadedVideos 状态:', uploadedVideos);
+        console.log('allUploaded:', allUploaded, 'hasAnyVideo:', hasAnyVideo);
+        
         if (startMultiAnalysisBtn) {
-            startMultiAnalysisBtn.disabled = !allUploaded;
+            // 只要有视频就可以开始分析，不需要所有视频都存在
+            startMultiAnalysisBtn.disabled = !hasAnyVideo;
+            console.log('开始分析按钮状态:', !hasAnyVideo ? '禁用' : '启用');
         }
 
         // 更新上传状态文本
@@ -293,9 +370,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // 更新分析状态文本
         updateAnalysisStatusText();
 
+        // 更新视频预览区域的显示状态
+        const previewSection = document.getElementById('videoPreviewSection');
+        if (previewSection) {
+            if (hasAnyVideo) {
+                showVideoPreviewSection();
+            } else {
+                previewSection.style.display = 'none';
+            }
+        }
+
         if (allUploaded) {
-            showVideoPreviewSection();
-            
             // 延迟一下再收起上传卡片，让用户看到完成状态
             setTimeout(() => {
                 collapseVideoUploadSection();
@@ -349,11 +434,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // 原有的分析逻辑
-        if (Object.values(uploadedVideos).every(video => video !== null)) {
-            showAnalysisControlSection();
+        // 检查是否有上传的视频
+        const hasVideos = Object.values(uploadedVideos).some(video => video !== null);
+        if (!hasVideos) {
+            showAlert('请先上传至少一个视频', 'error');
+            return;
+        }
+        
+        // 显示分析控制区域
+        showAnalysisControlSection();
+        
+        // 显示提示信息
+        const uploadedCount = Object.values(uploadedVideos).filter(video => video !== null).length;
+        if (uploadedCount < 3) {
+            showAlert(`当前有 ${uploadedCount}/3 个视频，可以进行部分分析`, 'info');
         } else {
-            showAlert('请先上传所有角度的视频', 'error');
+            showAlert('所有视频已准备就绪，可以开始综合分析', 'success');
         }
     }
 
@@ -589,18 +685,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function loadPatientsList() {
-        fetch('/api/patients/select')
+        return fetch('/api/patients/select')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     patientsList = data.data;
                     displayPatientsList(patientsList);
+                    return patientsList;
                 } else {
                     showAlert('加载患者列表失败：' + data.message, 'error');
+                    throw new Error(data.message);
                 }
             })
             .catch(error => {
                 showAlert('加载患者列表失败：' + error.message, 'error');
+                throw error;
             });
     }
 
@@ -630,12 +729,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>${patient.gender || '-'}</td>
                 <td>${patient.record_time || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-primary" onclick="selectPatient(${patient.id})">
+                    <button class="btn btn-sm btn-primary select-patient-btn" data-patient-id="${patient.id}">
                         <i class="fas fa-check me-1"></i>选择
                     </button>
                 </td>
             </tr>
         `).join('');
+        
+        // 为所有选择按钮添加事件监听器
+        const selectButtons = tbody.querySelectorAll('.select-patient-btn');
+        selectButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const patientId = parseInt(this.getAttribute('data-patient-id'));
+                selectPatientInternal(patientId);
+            });
+        });
     }
 
     function filterPatients() {
@@ -668,6 +776,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 selectedPatient = patient;
+                
+                // 保存患者选择到localStorage
+                savePatientSelection(patient);
+                
                 updateSelectedPatientDisplay();
                 
                 // 关闭模态框
@@ -690,11 +802,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function checkPatientVideos(patientId) {
-        fetch(`/api/patients/${patientId}/videos/check`)
+        return checkPatientVideosAsync(patientId);
+    }
+
+    function checkPatientVideosAsync(patientId) {
+        console.log('开始检查患者视频，患者ID:', patientId);
+        return fetch(`/api/patients/${patientId}/videos/check`)
             .then(response => response.json())
             .then(data => {
+                console.log('患者视频检查结果:', data);
                 if (data.success) {
                     if (data.allExist) {
+                        console.log('所有视频都存在');
                         // 所有视频都存在，直接显示预览
                         uploadedVideos = {
                             front: { url: data.urls.front, filename: 'front.mp4' },
@@ -712,13 +831,27 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // 显示视频预览
                         showVideoPreviewSection();
-                        updateVideoPreviews();
+                        
+                        // 立即更新视频预览
+                        Object.keys(data.urls).forEach(angle => {
+                            updateVideoPreview(angle, data.urls[angle]);
+                        });
                         
                         // 收起上传卡片
                         collapseVideoUploadSection();
                         
+                        // 检查所有视频状态并更新界面
+                        checkAllVideosUploaded();
+                        
+                        // 强制刷新视频预览
+                        setTimeout(() => {
+                            refreshVideoPreviews();
+                        }, 200);
+                        
+                        console.log('所有视频加载完成，当前状态:', uploadedVideos);
                         showAlert('检测到患者已有视频文件，已自动加载', 'success');
                     } else {
+                        console.log('部分视频存在，视频状态:', data.videos);
                         // 部分或没有视频，展开上传卡片
                         expandVideoUploadSection();
                         
@@ -728,19 +861,32 @@ document.addEventListener('DOMContentLoaded', function() {
                                 uploadedVideos[angle] = { url: data.urls[angle], filename: `${angle}.mp4` };
                                 updateUploadStatus(angle, 'uploaded');
                                 updateVideoPreview(angle, data.urls[angle]);
+                                console.log(`视频状态更新: ${angle} =`, uploadedVideos[angle]);
                             }
                         });
                         
                         // 更新状态文本
                         updateUploadStatusText();
                         
+                        // 检查所有视频状态并更新界面
                         checkAllVideosUploaded();
+                        
+                        // 调试信息
+                        console.log('当前视频状态:', uploadedVideos);
+                        console.log('视频数量:', Object.values(uploadedVideos).filter(video => video !== null).length);
+                        
+                        // 强制刷新视频预览
+                        setTimeout(() => {
+                            refreshVideoPreviews();
+                        }, 200);
                     }
                 } else {
+                    console.error('检查患者视频失败:', data.message);
                     showAlert('检查患者视频失败：' + data.message, 'error');
                 }
             })
             .catch(error => {
+                console.error('检查患者视频网络错误:', error);
                 showAlert('检查患者视频失败：' + error.message, 'error');
             });
     }
@@ -829,21 +975,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             updateUploadStatus(angle, 'uploaded');
                             
                             // 更新视频预览
-                            const videoElement = document.getElementById(angle + 'VideoPreview');
-                            if (videoElement) {
-                                videoElement.src = urls[angle];
-                                videoElement.load();
-                            }
+                            updateVideoPreview(angle, urls[angle]);
                         } else {
                             // 视频不存在，重置状态
                             uploadedVideos[angle] = null;
                             updateUploadStatus(angle, 'default');
                             
                             // 清除视频预览
-                            const videoElement = document.getElementById(angle + 'VideoPreview');
-                            if (videoElement) {
-                                videoElement.src = '';
-                            }
+                            updateVideoPreview(angle, null);
                         }
                     });
                     
@@ -862,6 +1001,37 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('检查患者视频失败:', error);
             });
+    }
+
+    function refreshVideoPreviews() {
+        // 强制刷新所有视频预览
+        Object.keys(uploadedVideos).forEach(angle => {
+            const video = uploadedVideos[angle];
+            if (video && video.url) {
+                // 重新加载视频
+                const videoElement = document.getElementById(angle + 'VideoPreview');
+                if (videoElement) {
+                    const currentSrc = videoElement.src;
+                    videoElement.src = '';
+                    videoElement.load();
+                    setTimeout(() => {
+                        videoElement.src = currentSrc;
+                        videoElement.load();
+                    }, 50);
+                }
+            }
+        });
+        
+        // 更新预览区域的显示状态
+        const hasVideos = Object.values(uploadedVideos).some(video => video !== null);
+        const previewSection = document.getElementById('videoPreviewSection');
+        if (previewSection) {
+            if (hasVideos) {
+                showVideoPreviewSection();
+            } else {
+                previewSection.style.display = 'none';
+            }
+        }
     }
 
     function updateSelectedPatientDisplay() {
@@ -961,10 +1131,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateUploadStatus(angle, 'default');
                     
                     // 清除视频预览
-                    const videoElement = document.getElementById(angle + 'VideoPreview');
-                    if (videoElement) {
-                        videoElement.src = '';
-                    }
+                    updateVideoPreview(angle, null);
                     
                     // 重置文件输入
                     const fileInput = document.getElementById(angle + 'VideoFile');
@@ -973,7 +1140,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     showAlert(`${angle}角度视频已删除`, 'success');
+                    
+                    // 检查所有视频状态并更新界面
                     checkAllVideosUploaded();
+                    
+                    // 强制刷新视频预览区域
+                    setTimeout(() => {
+                        refreshVideoPreviews();
+                    }, 100);
                 } else {
                     showAlert('删除失败：' + data.message, 'error');
                 }
@@ -983,11 +1157,93 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
+    // localStorage相关函数
+    function savePatientSelection(patient) {
+        try {
+            const patientData = {
+                id: patient.id,
+                name: patient.name,
+                age: patient.age,
+                gender: patient.gender,
+                record_time: patient.record_time,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('ai_video_selected_patient', JSON.stringify(patientData));
+            console.log('患者选择已保存到localStorage:', patientData);
+        } catch (error) {
+            console.error('保存患者选择失败:', error);
+        }
+    }
+
+    function loadPatientSelection() {
+        try {
+            const savedData = localStorage.getItem('ai_video_selected_patient');
+            if (savedData) {
+                const patientData = JSON.parse(savedData);
+                
+                // 检查数据是否过期（24小时）
+                const now = Date.now();
+                const savedTime = patientData.timestamp || 0;
+                const hoursDiff = (now - savedTime) / (1000 * 60 * 60);
+                
+                if (hoursDiff > 24) {
+                    // 数据过期，清除
+                    localStorage.removeItem('ai_video_selected_patient');
+                    console.log('患者选择数据已过期，已清除');
+                    return null;
+                }
+                
+                console.log('从localStorage加载患者选择:', patientData);
+                return patientData;
+            }
+        } catch (error) {
+            console.error('加载患者选择失败:', error);
+            // 清除损坏的数据
+            localStorage.removeItem('ai_video_selected_patient');
+        }
+        return null;
+    }
+
+    function clearPatientSelection() {
+        try {
+            localStorage.removeItem('ai_video_selected_patient');
+            console.log('患者选择已从localStorage清除');
+        } catch (error) {
+            console.error('清除患者选择失败:', error);
+        }
+    }
+
+    function restorePatientSelection() {
+        const savedPatient = loadPatientSelection();
+        if (savedPatient) {
+            // 先加载患者列表，然后恢复选择
+            loadPatientsList().then(() => {
+                // 检查患者是否仍然存在
+                const patient = patientsList.find(p => p.id === savedPatient.id);
+                if (patient) {
+                    console.log('恢复患者选择:', patient);
+                    selectedPatient = patient;
+                    updateSelectedPatientDisplay();
+                    
+                    // 检查患者视频并等待完成
+                    console.log('开始检查患者视频...');
+                    return checkPatientVideosAsync(patient.id);
+                } else {
+                    console.log('保存的患者不存在，清除选择');
+                    clearPatientSelection();
+                    showAlert('之前选择的患者已不存在，请重新选择', 'warning');
+                    return Promise.reject('患者不存在');
+                }
+            }).then(() => {
+                console.log('患者视频检查完成，当前视频状态:', uploadedVideos);
+                showAlert(`已恢复患者选择: ${selectedPatient.name}`, 'success');
+            }).catch(error => {
+                console.error('恢复患者选择失败:', error);
+                clearPatientSelection();
+            });
+        }
+    }
 });
 
-// 全局函数，供HTML调用
-function selectPatient(patientId) {
-    // 触发页面上的selectPatient函数
-    const event = new CustomEvent('selectPatient', { detail: { patientId: patientId } });
-    document.dispatchEvent(event);
-} 
+ 

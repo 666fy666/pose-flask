@@ -28,7 +28,10 @@
                             <h5 class="mb-0">
                                 <i class="fas fa-user-injured me-2"></i>患者选择
                             </h5>
-                            <p class="text-muted mb-0">请先选择要进行AI视频分析的患者</p>
+                            <!-- <p class="text-muted mb-0">请先选择要进行AI视频分析的患者</p> -->
+                            <!-- <small class="text-info">
+                                <i class="fas fa-info-circle me-1"></i>患者选择会自动保存，刷新页面后会自动恢复
+                            </small> -->
                         </div>
                         <div class="card-body">
                             <!-- 未选择患者时的提示 -->
@@ -67,8 +70,11 @@
                                         </div>
                                     </div>
                                     <div class="col-md-4 text-end">
-                                        <button class="btn btn-outline-primary" id="changePatientBtn">
+                                        <button class="btn btn-outline-primary me-2" id="changePatientBtn">
                                             <i class="fas fa-exchange-alt me-2"></i>更换患者
+                                        </button>
+                                        <button class="btn btn-outline-secondary" id="clearPatientBtn" title="清除患者选择">
+                                            <i class="fas fa-times me-2"></i>清除
                                         </button>
                                     </div>
                                 </div>
@@ -213,7 +219,7 @@
                             </div>
 
                             <!-- 批量上传按钮 -->
-                            <div class="text-center mt-4">
+                            <!-- div class="text-center mt-4">
                                 <button class="btn btn-outline-primary" id="batchUploadBtn">
                                     <i class="fas fa-folder-open me-2"></i>批量选择文件
                                 </button>
@@ -283,6 +289,9 @@
                                 <button class="btn btn-primary btn-lg" id="startMultiAnalysisBtn" disabled>
                                     <i class="fas fa-play me-2"></i>开始综合分析
                                 </button>
+                                <button class="btn btn-outline-secondary btn-lg ms-2" id="refreshVideoPreviewsBtn">
+                                    <i class="fas fa-sync-alt me-2"></i>刷新预览
+                                </button>
                                 <p class="text-muted mt-2" id="analysisStatusText">请确保所有视频都已上传完成</p>
                             </div>
                         </div>
@@ -303,12 +312,12 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="analysisType" class="form-label">
-                                        <i class="fas fa-tasks me-2"></i>分析类型
+                                        <i class="fas fa-tasks me-2"></i>模型类型
                                     </label>
                                     <select class="form-select" id="analysisType">
-                                        <option value="pose">人体姿态检测</option>
-                                        <option value="motion">运动学分析</option>
-                                        <option value="comprehensive" selected>综合分析</option>
+                                        <option value="pose">pose-m</option>
+                                        <option value="motion">pose-n</option>
+                                        <option value="comprehensive" selected>pose-s</option>
                                     </select>
                                 </div>
                                 
