@@ -14,6 +14,7 @@ from .pose_detector import PoseDetector
 from .data_processor import DataProcessor
 from .report_generator import ReportGenerator
 from .json_serializer import serialize_data, convert_numpy_types
+from .font_config import setup_chinese_font
 
 class VideoAnalyzer:
     """视频分析器类"""
@@ -25,6 +26,9 @@ class VideoAnalyzer:
         Args:
             model_path: YOLO模型文件路径
         """
+        # 设置中文字体支持
+        setup_chinese_font()
+        
         self.pose_detector = PoseDetector(model_path)
         self.data_processor = DataProcessor()
         self.report_generator = ReportGenerator()

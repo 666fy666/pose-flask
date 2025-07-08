@@ -861,6 +861,112 @@ def api_delete_patient_video(patient_id, filename):
     except Exception as e:
         return jsonify({'success': False, 'message': f'删除视频文件失败: {str(e)}'}), 500
 
+@app.route('/api/patients/<int:patient_id>/analysis_history', methods=['GET'])
+@login_required
+def api_get_patient_analysis_history(patient_id):
+    """获取患者的分析历史记录（报告文件）"""
+    try:
+        patient = Patient.query.get_or_404(patient_id)
+        
+        # 创建患者文件夹名称
+        folder_name = f"{patient.id}-{patient.username}"
+        folder_name = "".join(c for c in folder_name if c.isalnum() or c in ('-', '_'))
+        
+        # 报告目录
+        reports_dir = os.path.join(PATIENTS_DATA_DIR, folder_name, 'reports')
+        
+        history_records = []
+        
+        if os.path.exists(reports_dir):
+            # 获取所有.docx文件
+            for filename in os.listdir(reports_dir):
+                if filename.endswith('.docx'):
+                    file_path = os.path.join(reports_dir, filename)
+                    file_stat = os.stat(file_path)
+                    
+                    # 从文件名解析信息
+                    # 格式: report-张三-2025-07-08-14-01-28.docx
+                    file_info = filename.replace('.docx', '').split('-')
+                    if len(file_info) >= 6:
+                        # 提取日期时间信息
+                        date_str = '-'.join(file_info[2:5])  # 2025-07-08
+                        time_str = '-'.join(file_info[5:8])  # 14-01-28
+                        datetime_str = f"{date_str} {time_str.replace('-', ':')}"
+                        
+                        # 尝试解析时间
+                        try:
+                            from datetime import datetime
+                            parsed_time = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
+                            formatted_time = parsed_time.strftime('%Y-%m-%d %H:%M:%S')
+                        except:
+                            # 如果解析失败，使用文件修改时间
+                            formatted_time = datetime.fromtimestamp(file_stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                    else:
+                        # 使用文件修改时间
+                        formatted_time = datetime.fromtimestamp(file_stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                    
+                    record = {
+                        'filename': filename,
+                        'file_path': file_path,
+                        'file_size': file_stat.st_size,
+                        'modified_time': formatted_time,
+                        'download_url': f"/api/patients/{patient_id}/reports/{filename}",
+                        'analysis_type': 'comprehensive',  # 默认为综合分析
+                        'status': 'completed',  # 报告已生成
+                        'confidence': 'N/A'  # 报告中没有置信度信息
+                    }
+                    history_records.append(record)
+            
+            # 按时间倒序排列（最新的在前）
+            history_records.sort(key=lambda x: x['modified_time'], reverse=True)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'patient_id': patient_id,
+                'patient_name': patient.username,
+                'history_records': history_records,
+                'total_count': len(history_records)
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'获取分析历史失败: {str(e)}'}), 500
+
+@app.route('/api/patients/<int:patient_id>/reports/<filename>', methods=['DELETE'])
+@login_required
+def api_delete_patient_report(patient_id, filename):
+    """删除患者的报告文件"""
+    try:
+        patient = Patient.query.get_or_404(patient_id)
+        
+        # 创建患者文件夹名称
+        folder_name = f"{patient.id}-{patient.username}"
+        folder_name = "".join(c for c in folder_name if c.isalnum() or c in ('-', '_'))
+        
+        # 报告目录
+        reports_dir = os.path.join(PATIENTS_DATA_DIR, folder_name, 'reports')
+        report_path = os.path.join(reports_dir, filename)
+        
+        # 检查文件是否存在
+        if not os.path.exists(report_path):
+            return jsonify({'success': False, 'message': '报告文件不存在'}), 404
+        
+        # 检查文件是否为.docx格式
+        if not filename.endswith('.docx'):
+            return jsonify({'success': False, 'message': '只能删除Word格式的报告文件'}), 400
+        
+        # 删除文件
+        os.remove(report_path)
+        
+        return jsonify({
+            'success': True,
+            'message': f'报告文件 {filename} 删除成功'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'删除报告文件失败: {str(e)}'}), 500
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

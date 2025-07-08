@@ -337,8 +337,16 @@
                                 
                                 <div class="col-12">
                                     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                                        <button class="btn btn-primary btn-large" id="startAnalysisBtn">
-                                            <i class="fas fa-play me-2"></i>开始分析
+                                        <button class="progress-button" id="startAnalysisBtn">
+                                            <svg class="progress-ring" width="60" height="60">
+                                                <circle class="progress-ring-circle" cx="30" cy="30" r="27"></circle>
+                                                <circle class="progress-ring-progress" cx="30" cy="30" r="27"></circle>
+                                            </svg>
+                                            <div class="button-content">
+                                                <div class="button-text">开始分析</div>
+                                                <div class="progress-text">0%</div>
+                                                <div class="spinner"></div>
+                                            </div>
                                         </button>
                                         <button class="btn btn-secondary btn-large" id="stopAnalysisBtn" style="display: none;">
                                             <i class="fas fa-stop me-2"></i>停止分析
@@ -399,25 +407,41 @@
                             <h5 class="mb-0">
                                 <i class="fas fa-history me-2"></i>历史分析记录
                             </h5>
-                            <button class="btn btn-outline-primary btn-sm" id="refreshHistoryBtn">
-                                <i class="fas fa-sync-alt me-1"></i>刷新
-                            </button>
+                            <div>
+                                <span class="text-muted me-3" id="historyCountText">
+                                    <i class="fas fa-file-word me-1"></i>共 0 个报告
+                                </span>
+                                <button class="btn btn-outline-primary btn-sm" id="refreshHistoryBtn">
+                                    <i class="fas fa-sync-alt me-1"></i>刷新
+                                </button>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
                                 <table class="table table-hover" id="historyTable">
                                     <thead>
                                         <tr>
-                                            <th>时间</th>
-                                            <th>文件名</th>
-                                            <th>分析类型</th>
-                                            <th>状态</th>
-                                            <th>置信度</th>
-                                            <th>操作</th>
+                                            <th style="width: 25%;">
+                                                <i class="fas fa-clock me-1"></i>时间
+                                            </th>
+                                            <th style="width: 45%;">
+                                                <i class="fas fa-file-word me-1"></i>文件名
+                                            </th>
+                                            <th style="width: 15%;">
+                                                <i class="fas fa-check-circle me-1"></i>状态
+                                            </th>
+                                            <th style="width: 15%;">
+                                                <i class="fas fa-cogs me-1"></i>操作
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody id="historyTableBody">
-                                        <!-- 历史记录将通过JavaScript动态加载 -->
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                请先选择患者以查看分析历史记录
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>

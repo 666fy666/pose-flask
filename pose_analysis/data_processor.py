@@ -9,14 +9,15 @@ import pandas as pd
 from typing import Dict, List, Tuple, Optional, Any
 from datetime import datetime
 import os
+from .font_config import setup_chinese_font, get_font_properties
 
 class DataProcessor:
     """数据处理器类"""
     
     def __init__(self):
         """初始化数据处理器"""
-        plt.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']  # 支持中文显示
-        plt.rcParams['axes.unicode_minus'] = False  # 正常显示负号
+        # 设置中文字体支持
+        setup_chinese_font()
     
     def calculate_velocity(self, angle_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """

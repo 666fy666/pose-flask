@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
+        // 初始化进度条按钮
+        initializeProgressButton();
+        
         // 默认收起上传卡片
         collapseVideoUploadSection();
         
@@ -47,6 +50,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 检查患者记录并初始化患者选择
         checkPatientsAndInitialize();
+    }
+
+    function initializeProgressButton() {
+        const progressButton = document.getElementById('startAnalysisBtn');
+        if (progressButton) {
+            const progressRing = progressButton.querySelector('.progress-ring-progress');
+            const radius = 27;
+            const circumference = 2 * Math.PI * radius;
+            
+            // 设置初始状态
+            progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+            progressRing.style.strokeDashoffset = circumference;
+        }
     }
 
     function bindEventListeners() {
@@ -159,6 +175,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const patientSearchInput = document.getElementById('patientSearchInput');
         if (patientSearchInput) {
             patientSearchInput.addEventListener('input', filterPatients);
+        }
+        
+        // 绑定历史记录刷新按钮
+        const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
+        if (refreshHistoryBtn) {
+            refreshHistoryBtn.addEventListener('click', loadAnalysisHistory);
         }
         
 
@@ -476,6 +498,9 @@ document.addEventListener('DOMContentLoaded', function() {
         analysisInProgress = true;
         updateAnalysisButtons(true);
         
+        // 启动进度条动画
+        startProgressAnimation();
+        
         const analysisType = document.getElementById('analysisType').value;
         const confidenceThreshold = document.getElementById('confidenceThreshold').value;
         
@@ -501,16 +526,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 修复：使用正确的数据结构
                 displayAnalysisResults(data.analysisResult);
                 showAlert('分析完成', 'success');
+                
+                // 分析完成后自动刷新历史记录
+                setTimeout(() => {
+                    loadAnalysisHistory();
+                }, 1000); // 延迟1秒刷新，确保报告文件已生成
             } else {
                 showAlert('分析失败：' + data.message, 'error');
             }
         })
         .catch(error => {
             showAlert('分析失败：' + error.message, 'error');
+            
+            // 分析失败时也刷新历史记录，以防有部分文件生成
+            setTimeout(() => {
+                loadAnalysisHistory();
+            }, 1000);
         })
         .finally(() => {
             analysisInProgress = false;
             updateAnalysisButtons(false);
+            // 完成进度条动画
+            completeProgressAnimation();
         });
     }
 
@@ -523,7 +560,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     showAlert('分析已停止', 'info');
+                    analysisInProgress = false;
                     updateAnalysisButtons(false);
+                    // 重置进度条
+                    resetProgressAnimation();
                 }
             })
             .catch(error => {
@@ -532,14 +572,122 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function resetProgressAnimation() {
+        const progressButton = document.getElementById('startAnalysisBtn');
+        const progressRing = progressButton.querySelector('.progress-ring-progress');
+        const progressText = progressButton.querySelector('.progress-text');
+        const buttonText = progressButton.querySelector('.button-text');
+        
+        // 清除之前的interval
+        if (progressButton.progressInterval) {
+            clearInterval(progressButton.progressInterval);
+            progressButton.progressInterval = null;
+        }
+        
+        // 计算圆的周长
+        const radius = 27;
+        const circumference = 2 * Math.PI * radius;
+        
+        // 重置进度条
+        progressRing.style.strokeDashoffset = circumference;
+        progressText.textContent = '0%';
+        buttonText.textContent = '开始分析';
+    }
+
     function updateAnalysisButtons(analyzing) {
         const startBtn = document.getElementById('startAnalysisBtn');
         const stopBtn = document.getElementById('stopAnalysisBtn');
         const exportBtn = document.getElementById('exportResultBtn');
 
-        if (startBtn) startBtn.style.display = analyzing ? 'none' : 'inline-block';
+        if (startBtn) {
+            if (analyzing) {
+                startBtn.classList.add('analyzing');
+                startBtn.disabled = true;
+            } else {
+                startBtn.classList.remove('analyzing');
+                startBtn.disabled = false;
+            }
+        }
         if (stopBtn) stopBtn.style.display = analyzing ? 'inline-block' : 'none';
         if (exportBtn) exportBtn.style.display = analyzing ? 'none' : 'inline-block';
+    }
+
+    // 进度条管理函数
+    function startProgressAnimation() {
+        const progressButton = document.getElementById('startAnalysisBtn');
+        const progressRing = progressButton.querySelector('.progress-ring-progress');
+        const progressText = progressButton.querySelector('.progress-text');
+        const buttonText = progressButton.querySelector('.button-text');
+        
+        // 计算圆的周长
+        const radius = 27;
+        const circumference = 2 * Math.PI * radius;
+        
+        // 设置初始状态
+        progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+        progressRing.style.strokeDashoffset = circumference;
+        
+        // 模拟进度更新
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            if (!analysisInProgress) {
+                clearInterval(progressInterval);
+                return;
+            }
+            
+            progress += Math.random() * 15; // 随机增加进度
+            if (progress > 90) progress = 90; // 最大到90%，等待实际完成
+            
+            const progressPercent = Math.round(progress);
+            const offset = circumference - (progressPercent / 100) * circumference;
+            
+            progressRing.style.strokeDashoffset = offset;
+            progressText.textContent = progressPercent + '%';
+            
+            // 更新按钮文本
+            if (progressPercent < 30) {
+                buttonText.textContent = '初始化中';
+            } else if (progressPercent < 60) {
+                buttonText.textContent = '分析中';
+            } else if (progressPercent < 90) {
+                buttonText.textContent = '处理中';
+            } else {
+                buttonText.textContent = '完成中';
+            }
+        }, 500);
+        
+        // 保存interval ID以便后续清除
+        progressButton.progressInterval = progressInterval;
+    }
+
+    function completeProgressAnimation() {
+        const progressButton = document.getElementById('startAnalysisBtn');
+        const progressRing = progressButton.querySelector('.progress-ring-progress');
+        const progressText = progressButton.querySelector('.progress-text');
+        const buttonText = progressButton.querySelector('.button-text');
+        
+        // 清除之前的interval
+        if (progressButton.progressInterval) {
+            clearInterval(progressButton.progressInterval);
+            progressButton.progressInterval = null;
+        }
+        
+        // 计算圆的周长
+        const radius = 27;
+        const circumference = 2 * Math.PI * radius;
+        
+        // 完成到100%
+        const offset = 0;
+        progressRing.style.strokeDashoffset = offset;
+        progressText.textContent = '100%';
+        buttonText.textContent = '完成';
+        
+        // 延迟后重置按钮
+        setTimeout(() => {
+            progressRing.style.strokeDashoffset = circumference;
+            progressText.textContent = '0%';
+            buttonText.textContent = '开始分析';
+        }, 1000);
     }
 
     function showAnalysisResultSection() {
@@ -1300,10 +1448,229 @@ document.addEventListener('DOMContentLoaded', function() {
             }).then(() => {
                 console.log('患者视频检查完成，当前视频状态:', uploadedVideos);
                 showAlert(`已恢复患者选择: ${selectedPatient.name}`, 'success');
+                
+                // 加载分析历史记录
+                loadAnalysisHistory();
             }).catch(error => {
                 console.error('恢复患者选择失败:', error);
                 clearPatientSelection();
             });
+        }
+    }
+
+    // 历史分析记录相关函数
+    function loadAnalysisHistory() {
+        if (!selectedPatient) {
+            showAlert('请先选择患者', 'warning');
+            return;
+        }
+        
+        const historyTableBody = document.getElementById('historyTableBody');
+        if (!historyTableBody) {
+            console.error('找不到历史记录表格');
+            return;
+        }
+        
+        // 显示加载状态
+        historyTableBody.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    正在加载历史记录...
+                </td>
+            </tr>
+        `;
+        
+        // 调用API获取历史记录
+        fetch(`/api/patients/${selectedPatient.id}/analysis_history`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayAnalysisHistory(data.data.history_records);
+                } else {
+                    showAlert('加载历史记录失败: ' + data.message, 'error');
+                    historyTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                加载失败: ${data.message}
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('获取历史记录失败:', error);
+                showAlert('获取历史记录失败: ' + error.message, 'error');
+                historyTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            网络错误，请重试
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+
+    function displayAnalysisHistory(historyRecords) {
+        const historyTableBody = document.getElementById('historyTableBody');
+        const historyCountText = document.getElementById('historyCountText');
+        if (!historyTableBody) return;
+        
+        // 更新报告数量显示
+        if (historyCountText) {
+            historyCountText.innerHTML = `<i class="fas fa-file-word me-1"></i>共 ${historyRecords.length} 个报告`;
+        }
+        
+        if (!historyRecords || historyRecords.length === 0) {
+            historyTableBody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted">
+                        <i class="fas fa-file-alt fa-2x mb-2"></i>
+                        <br>暂无分析记录
+                        <br><small>完成分析后将在此显示报告文件</small>
+                    </td>
+                </tr>
+            `;
+            if (historyCountText) {
+                historyCountText.innerHTML = `<i class="fas fa-file-word me-1"></i>共 0 个报告`;
+            }
+            return;
+        }
+        
+        // 清空表格
+        historyTableBody.innerHTML = '';
+        
+        // 添加历史记录行
+        historyRecords.forEach(record => {
+            const row = document.createElement('tr');
+            
+            // 格式化文件大小
+            const fileSize = formatFileSize(record.file_size);
+            
+            // 格式化时间
+            const timeDisplay = record.modified_time;
+            
+            row.innerHTML = `
+                <td>
+                    <i class="fas fa-clock me-2 text-muted"></i>
+                    ${timeDisplay}
+                </td>
+                <td>
+                    <i class="fas fa-file-word me-2 text-primary"></i>
+                    ${record.filename}
+                    <br><small class="text-muted">${fileSize}</small>
+                </td>
+                <td>
+                    <span class="badge bg-success">
+                        <i class="fas fa-check me-1"></i>${record.status}
+                    </span>
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-primary" 
+                                onclick="downloadReport('${record.download_url}', '${record.filename}')"
+                                title="下载报告">
+                            <i class="fas fa-download me-1"></i>下载
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" 
+                                onclick="deleteReport('${record.filename}', '${record.modified_time}')"
+                                title="删除报告">
+                            <i class="fas fa-trash me-1"></i>删除
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            historyTableBody.appendChild(row);
+        });
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // 全局函数，供HTML调用
+    window.downloadReport = function(downloadUrl, filename) {
+        // 创建一个隐藏的a标签来触发下载
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showAlert(`正在下载: ${filename}`, 'success');
+    };
+
+    window.deleteReport = function(filename, modifiedTime) {
+        if (!selectedPatient) {
+            showAlert('请先选择患者', 'error');
+            return;
+        }
+        
+        // 确认删除
+        const confirmMessage = `确定要删除报告文件 "${filename}" 吗？\n\n生成时间: ${modifiedTime}\n\n此操作不可撤销！`;
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+        
+        // 调用删除API
+        fetch(`/api/patients/${selectedPatient.id}/reports/${filename}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(`报告文件删除成功: ${filename}`, 'success');
+                
+                // 删除成功后刷新历史记录
+                setTimeout(() => {
+                    loadAnalysisHistory();
+                }, 500);
+            } else {
+                showAlert('删除失败: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('删除报告失败:', error);
+            showAlert('删除失败: ' + error.message, 'error');
+        });
+    };
+
+    // 在患者选择后自动加载历史记录
+    function selectPatientInternal(patientId) {
+        const patient = patientsList.find(p => p.id == patientId);
+        if (patient) {
+            selectedPatient = patient;
+            updateSelectedPatientDisplay();
+            savePatientSelection(patient);
+            
+            // 关闭模态框
+            const modal = bootstrap.Modal.getInstance(document.getElementById('patientSelectModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // 检查患者视频
+            checkPatientVideosAsync(patient.id).then(() => {
+                console.log('患者视频检查完成');
+                showAlert(`已选择患者: ${patient.name}`, 'success');
+                
+                // 加载分析历史记录
+                loadAnalysisHistory();
+            }).catch(error => {
+                console.error('检查患者视频失败:', error);
+                showAlert('检查患者视频失败: ' + error.message, 'error');
+            });
+        } else {
+            showAlert('患者不存在', 'error');
         }
     }
 });
