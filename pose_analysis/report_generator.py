@@ -93,8 +93,8 @@ class ReportGenerator:
         
         # 准备腕部关节数据
         wrist_joint_data = {
-            "left_wrist_height_ratio": wrist_data.get('left_wrist_height_ratio', 0),
-            "right_wrist_height_ratio": wrist_data.get('right_wrist_height_ratio', 0)
+            "left_wrist_height_ratio": wrist_data.get('left_max_height', 0),
+            "right_wrist_height_ratio": wrist_data.get('right_max_height', 0)
         }
         
         # 准备图片路径（使用相对路径）
