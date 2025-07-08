@@ -970,4 +970,4 @@ def api_delete_patient_report(patient_id, filename):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True, host='0.0.0.0', port=5020) 
+    app.run(debug=True, host='0.0.0.0', port=5050) 

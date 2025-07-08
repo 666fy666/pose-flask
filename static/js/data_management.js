@@ -403,13 +403,8 @@ $(document).ready(function() {
             success: function(response) {
                 hideLoading();
                 if (response.success) {
-                    // 下载文件
-                    const link = document.createElement('a');
-                    link.href = response.download_url;
-                    link.download = response.filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    // 使用fetch API下载文件
+                    downloadFile(response.download_url, response.filename);
                     showToast('导出成功', 'success');
                 } else {
                     showToast(response.message || '导出失败', 'danger');
@@ -436,13 +431,8 @@ $(document).ready(function() {
             success: function(response) {
                 hideLoading();
                 if (response.success) {
-                    // 下载文件
-                    const link = document.createElement('a');
-                    link.href = response.download_url;
-                    link.download = response.filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    // 使用fetch API下载文件
+                    downloadFile(response.download_url, response.filename);
                     showToast('导出成功', 'success');
                 } else {
                     showToast(response.message || '导出失败', 'danger');
@@ -465,13 +455,8 @@ $(document).ready(function() {
             success: function(response) {
                 hideLoading();
                 if (response.success) {
-                    // 下载备份文件
-                    const link = document.createElement('a');
-                    link.href = response.download_url;
-                    link.download = response.filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    // 使用fetch API下载文件
+                    downloadFile(response.download_url, response.filename);
                     showToast('数据库备份成功', 'success');
                 } else {
                     showToast(response.message || '备份失败', 'danger');
@@ -482,5 +467,42 @@ $(document).ready(function() {
                 showToast('备份失败', 'danger');
             }
         });
+    }
+
+    // 通用文件下载函数
+    function downloadFile(downloadUrl, filename) {
+        // 显示下载提示
+        showToast(`正在下载: ${filename}`, 'info');
+        
+        // 使用fetch API获取文件内容
+        fetch(downloadUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // 创建下载链接
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.style.display = 'none';
+                
+                // 添加到DOM并触发下载
+                document.body.appendChild(link);
+                link.click();
+                
+                // 清理
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                showToast(`下载完成: ${filename}`, 'success');
+            })
+            .catch(error => {
+                console.error('下载失败:', error);
+                showToast(`下载失败: ${error.message}`, 'error');
+            });
     }
 }); 

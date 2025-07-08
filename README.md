@@ -13,6 +13,39 @@
 - **文件处理**: 视频上传、存储、预览
 - **数据库**: SQLite (patients.db, user.db)
 
+### 技术改进记录
+
+#### 文件下载优化 (2024年最新)
+**问题**: 原有的下载按钮使用`<a href="..." download>`方式，在某些浏览器中会跳转到新页面而不是直接下载文件。
+
+**解决方案**: 
+1. **统一下载接口**: 创建了`downloadFile`、`downloadImage`、`downloadVideo`、`downloadReport`等全局函数
+2. **Fetch API + Blob**: 使用fetch API先获取文件内容，然后创建Blob对象进行下载
+3. **用户体验优化**: 添加下载进度提示和错误处理
+4. **代码重构**: 将所有`<a>`标签改为`<button>`，使用onclick事件触发下载
+
+**修改的文件**:
+- `static/js/ai_video.js`: 修复分析报告、历史记录、图片、视频的下载功能
+- `static/js/data_management.js`: 修复数据导出、数据库备份的下载功能  
+- `static/js/main.js`: 添加通用的服务器文件下载函数
+
+**技术细节**:
+```javascript
+// 新的下载方式示例
+window.downloadReport = function(downloadUrl, filename) {
+    fetch(downloadUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+            window.URL.revokeObjectURL(url);
+        });
+};
+```
+
 ### 目录结构
 ```
 pose-flask/
@@ -99,7 +132,14 @@ pose-flask/
 - **建议生成**: 根据分析结果自动生成康复建议
 - **报告存储**: 报告保存在`patients_data/{id}-{姓名}/reports/`目录
 - **历史记录**: 显示患者所有分析报告的历史记录
-- **报告下载**: 支持下载和预览Word格式报告文件
+- **报告下载**: 支持直接下载Word格式报告文件，无需跳转页面
+
+#### 文件下载系统
+- **直接下载**: 所有下载按钮都使用fetch API获取文件内容后直接下载，避免页面跳转
+- **进度提示**: 下载过程中显示友好的进度提示信息
+- **错误处理**: 下载失败时显示详细的错误信息
+- **文件类型支持**: 支持图片、视频、文档等多种文件类型的下载
+- **统一接口**: 提供统一的下载函数，确保所有下载行为一致
 
 #### 视频预览更新机制
 - **自动更新**: 上传、重新上传或删除视频后自动刷新预览界面

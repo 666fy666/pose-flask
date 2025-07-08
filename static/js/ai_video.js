@@ -811,9 +811,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <a href="${path}" target="_blank" class="btn btn-sm btn-outline-primary" title="在新窗口打开">
                                         <i class="fas fa-external-link-alt"></i>
                                     </a>
-                                    <a href="${path}" download class="btn btn-sm btn-outline-secondary" title="下载图片">
+                                    <button onclick="downloadImage('${path}', '${displayName}.png')" class="btn btn-sm btn-outline-secondary" title="下载图片">
                                         <i class="fas fa-download"></i>
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
                             <div class="chart-container">
@@ -843,11 +843,12 @@ document.addEventListener('DOMContentLoaded', function() {
             filesHtml += '<div class="file-group mb-3"><h5><i class="fas fa-video me-2"></i>标注视频</h5><div class="row">';
             Object.entries(analysisResult.videoOutputPaths).forEach(([name, path]) => {
                 const displayName = name.replace(/_annotated\.avi/, ' 角度标注视频');
+                const filename = `${displayName}.avi`;
                 filesHtml += `
                     <div class="col-md-6 col-lg-4 mb-2">
-                        <a href="${path}" target="_blank" class="btn btn-outline-success btn-sm w-100">
+                        <button onclick="downloadVideo('${path}', '${filename}')" class="btn btn-outline-success btn-sm w-100">
                             <i class="fas fa-video me-2"></i>${displayName} (.avi)
-                        </a>
+                        </button>
                     </div>
                 `;
             });
@@ -856,12 +857,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 显示报告文件
         if (analysisResult.reportPath) {
+            // 从路径中提取文件名
+            const reportFilename = analysisResult.reportPath.split('/').pop() || '分析报告.docx';
             filesHtml += `
                 <div class="file-group mb-3">
                     <h5><i class="fas fa-file-word me-2"></i>分析报告</h5>
-                    <a href="${analysisResult.reportPath}" target="_blank" class="btn btn-outline-info">
+                    <button onclick="downloadReport('${analysisResult.reportPath}', '${reportFilename}')" class="btn btn-outline-info">
                         <i class="fas fa-file-word me-2"></i>下载Word格式报告
-                    </a>
+                    </button>
                 </div>
             `;
         }
@@ -1695,16 +1698,113 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 全局函数，供HTML调用
     window.downloadReport = function(downloadUrl, filename) {
-        // 创建一个隐藏的a标签来触发下载
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = filename;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // 显示下载提示
+        showAlert(`正在下载: ${filename}`, 'info');
         
-        showAlert(`正在下载: ${filename}`, 'success');
+        // 使用fetch API获取文件内容
+        fetch(downloadUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // 创建下载链接
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.style.display = 'none';
+                
+                // 添加到DOM并触发下载
+                document.body.appendChild(link);
+                link.click();
+                
+                // 清理
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                showAlert(`下载完成: ${filename}`, 'success');
+            })
+            .catch(error => {
+                console.error('下载失败:', error);
+                showAlert(`下载失败: ${error.message}`, 'error');
+            });
+    };
+
+    // 全局函数，供HTML调用 - 下载图片
+    window.downloadImage = function(imageUrl, filename) {
+        // 显示下载提示
+        showAlert(`正在下载: ${filename}`, 'info');
+        
+        // 使用fetch API获取图片内容
+        fetch(imageUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // 创建下载链接
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.style.display = 'none';
+                
+                // 添加到DOM并触发下载
+                document.body.appendChild(link);
+                link.click();
+                
+                // 清理
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                showAlert(`下载完成: ${filename}`, 'success');
+            })
+            .catch(error => {
+                console.error('下载失败:', error);
+                showAlert(`下载失败: ${error.message}`, 'error');
+            });
+    };
+
+    // 全局函数，供HTML调用 - 下载视频
+    window.downloadVideo = function(videoUrl, filename) {
+        // 显示下载提示
+        showAlert(`正在下载: ${filename}`, 'info');
+        
+        // 使用fetch API获取视频内容
+        fetch(videoUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // 创建下载链接
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.style.display = 'none';
+                
+                // 添加到DOM并触发下载
+                document.body.appendChild(link);
+                link.click();
+                
+                // 清理
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                
+                showAlert(`下载完成: ${filename}`, 'success');
+            })
+            .catch(error => {
+                console.error('下载失败:', error);
+                showAlert(`下载失败: ${error.message}`, 'error');
+            });
     };
 
     window.deleteReport = function(filename, modifiedTime) {

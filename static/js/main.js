@@ -382,6 +382,49 @@ $(document).ready(function() {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+        },
+
+        // 通用服务器文件下载函数
+        downloadServerFile: function(fileUrl, filename, onProgress, onComplete, onError) {
+            // 显示下载提示
+            if (onProgress) {
+                onProgress(`正在下载: ${filename}`);
+            }
+            
+            // 使用fetch API获取文件内容
+            fetch(fileUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    // 创建下载链接
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    link.style.display = 'none';
+                    
+                    // 添加到DOM并触发下载
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    // 清理
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                    
+                    if (onComplete) {
+                        onComplete(`下载完成: ${filename}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('下载失败:', error);
+                    if (onError) {
+                        onError(`下载失败: ${error.message}`);
+                    }
+                });
         }
     };
 
