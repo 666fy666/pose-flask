@@ -515,7 +515,7 @@ def analyze_video():
     # 获取视频信息
     videos = data.get('videos', {})
     analysis_type = data.get('analysisType', 'comprehensive')
-    confidence_threshold = data.get('confidenceThreshold', 50)
+    confidence_threshold = data.get('confidenceThreshold', 50) / 100.0  # 转换为0-1范围
     patient_id = data.get('patientId')
     
     if not videos:
@@ -530,7 +530,71 @@ def analyze_video():
         if not patient:
             return jsonify({'success': False, 'message': '患者不存在'}), 404
         
-        # 模拟多角度视频分析
+        # 创建患者文件夹名称
+        folder_name = f"{patient.id}-{patient.username}"
+        folder_name = "".join(c for c in folder_name if c.isalnum() or c in ('-', '_'))
+        
+        # 构建视频文件路径
+        video_paths = {}
+        for angle, video_info in videos.items():
+            if video_info:
+                video_filename = f"{angle}.mp4"
+                video_path = os.path.join(PATIENTS_DATA_DIR, folder_name, 'videos', video_filename)
+                if os.path.exists(video_path):
+                    video_paths[angle] = video_path
+        
+        if not video_paths:
+            return jsonify({'success': False, 'message': '没有找到有效的视频文件'}), 400
+        
+        # 导入视频分析器
+        from pose_analysis.video_analyzer import VideoAnalyzer
+        
+        # 创建视频分析器实例
+        analyzer = VideoAnalyzer("model/yolov8s-pose.pt")
+        
+        # 执行视频分析
+        analysis_result = analyzer.analyze_patient_videos(
+            patient_id=patient.id,
+            patient_name=patient.username,
+            video_paths=video_paths,
+            conf=confidence_threshold,
+            iou=0.45
+        )
+        
+        # 更新患者数据库中的AI评估结果
+        if analysis_result.get('report_data', {}).get('summary'):
+            summary = analysis_result['report_data']['summary']
+            patient.ai_motion_score = summary.get('function_score', 0)
+            patient.ai_motion_report = summary.get('function_assessment', '')
+            patient.ai_comprehensive_score = summary.get('function_score', 0)
+            patient.ai_comprehensive_report = summary.get('function_assessment', '')
+            db.session.commit()
+        
+        # 导入JSON序列化器
+        from pose_analysis.json_serializer import convert_numpy_types
+        
+        # 转换分析结果中的numpy类型
+        summary = analysis_result.get('report_data', {}).get('summary', {})
+        serializable_summary = convert_numpy_types(summary)
+        
+        # 转换文件路径为API路径
+        chart_paths = {}
+        for chart_name, file_path in analysis_result.get('chart_paths', {}).items():
+            filename = os.path.basename(file_path)
+            chart_paths[chart_name] = f"/api/patients/{patient.id}/analysis_results/{filename}"
+        
+        video_output_paths = {}
+        for angle, file_path in analysis_result.get('video_output_paths', {}).items():
+            filename = os.path.basename(file_path)
+            video_output_paths[angle] = f"/api/patients/{patient.id}/analysis_results/{filename}"
+        
+        # 转换报告路径
+        report_path = ""
+        if analysis_result.get('report_path'):
+            filename = os.path.basename(analysis_result['report_path'])
+            report_path = f"/api/patients/{patient.id}/reports/{filename}"
+        
+        # 返回分析结果
         results = {
             'success': True,
             'analysisId': f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -540,11 +604,11 @@ def analyze_video():
                 'age': patient.age,
                 'gender': patient.gender
             },
-            'results': {
-                'front': analyze_single_video('front', videos.get('front')),
-                'side': analyze_single_video('side', videos.get('side')),
-                'back': analyze_single_video('back', videos.get('back')),
-                'comprehensive': analyze_comprehensive(videos, analysis_type, confidence_threshold)
+            'analysisResult': {
+                'chartPaths': chart_paths,
+                'videoOutputPaths': video_output_paths,
+                'reportPath': report_path,
+                'summary': serializable_summary
             }
         }
         
@@ -553,71 +617,7 @@ def analyze_video():
     except Exception as e:
         return jsonify({'success': False, 'message': f'分析失败: {str(e)}'}), 500
 
-def analyze_single_video(angle, video_info):
-    """分析单个角度的视频"""
-    if not video_info:
-        return None
-    
-    # 模拟分析结果
-    import random
-    
-    return {
-        'confidence': random.randint(70, 95),
-        'keypoints': random.randint(15, 17),
-        'motionScore': random.randint(60, 90),
-        'summary': f'{angle}角度视频分析完成，检测到{random.randint(15, 17)}个关键点，运动流畅度良好。',
-        'details': {
-            'shoulder_angle': random.uniform(80, 120),
-            'elbow_angle': random.uniform(90, 150),
-            'wrist_position': 'normal',
-            'movement_smoothness': random.uniform(0.7, 0.9)
-        }
-    }
-
-def analyze_comprehensive(videos, analysis_type, confidence_threshold):
-    """综合分析多个角度的视频"""
-    # 模拟综合分析结果
-    import random
-    
-    # 计算综合评分
-    scores = []
-    for angle, video_info in videos.items():
-        if video_info:
-            scores.append(random.randint(70, 90))
-    
-    overall_score = sum(scores) // len(scores) if scores else 75
-    
-    # 生成评估结果
-    if overall_score >= 85:
-        assessment = "运动功能正常，肩关节活动度良好，无明显异常。"
-        recommendations = [
-            "继续保持当前运动习惯",
-            "定期进行肩关节保健运动",
-            "注意运动时的正确姿势"
-        ]
-    elif overall_score >= 70:
-        assessment = "运动功能基本正常，存在轻微活动受限，建议进一步观察。"
-        recommendations = [
-            "进行肩关节柔韧性训练",
-            "避免过度使用肩关节",
-            "定期进行功能评估"
-        ]
-    else:
-        assessment = "运动功能异常，存在明显活动受限，建议及时就医。"
-        recommendations = [
-            "立即停止剧烈运动",
-            "咨询专业医生进行详细检查",
-            "制定个性化康复计划"
-        ]
-    
-    return {
-        'overallScore': overall_score,
-        'assessment': assessment,
-        'recommendations': recommendations,
-        'analysisType': analysis_type,
-        'confidenceThreshold': confidence_threshold,
-        'videoCount': len([v for v in videos.values() if v])
-    }
+# 删除旧的模拟分析函数，使用新的真实分析功能
 
 @app.route('/api/stop_analysis/<analysis_id>', methods=['POST'])
 @login_required
@@ -659,6 +659,118 @@ def export_results(analysis_id):
         as_attachment=True,
         download_name=f'analysis_results_{analysis_id}.zip'
     )
+
+@app.route('/api/patients/<int:patient_id>/analysis_results', methods=['GET'])
+@login_required
+def get_patient_analysis_results(patient_id):
+    """获取患者的分析结果"""
+    try:
+        patient = Patient.query.get_or_404(patient_id)
+        
+        # 创建患者文件夹名称
+        folder_name = f"{patient.id}-{patient.username}"
+        folder_name = "".join(c for c in folder_name if c.isalnum() or c in ('-', '_'))
+        
+        # 分析结果目录
+        analysis_dir = os.path.join(PATIENTS_DATA_DIR, folder_name, 'analysis_results')
+        reports_dir = os.path.join(PATIENTS_DATA_DIR, folder_name, 'reports')
+        
+        results = {
+            'success': True,
+            'patient_id': patient_id,
+            'patient_name': patient.username,
+            'analysis_results': {},
+            'reports': []
+        }
+        
+        # 检查分析结果文件
+        if os.path.exists(analysis_dir):
+            # 获取图表文件
+            chart_files = []
+            for file in os.listdir(analysis_dir):
+                if file.endswith('.png'):
+                    chart_files.append({
+                        'name': file,
+                        'url': f"/api/patients/{patient_id}/analysis_results/{file}"
+                    })
+            results['analysis_results']['charts'] = chart_files
+            
+            # 获取分析数据
+            data_file = os.path.join(analysis_dir, 'analysis_data.json')
+            if os.path.exists(data_file):
+                with open(data_file, 'r', encoding='utf-8') as f:
+                    import json
+                    results['analysis_results']['data'] = json.load(f)
+            
+            # 获取标注视频
+            video_files = []
+            for file in os.listdir(analysis_dir):
+                if file.endswith('_annotated.avi'):
+                    video_files.append({
+                        'name': file,
+                        'url': f"/api/patients/{patient_id}/analysis_results/{file}"
+                    })
+            results['analysis_results']['videos'] = video_files
+        
+        # 检查报告文件
+        if os.path.exists(reports_dir):
+            for file in os.listdir(reports_dir):
+                if file.endswith('.docx'):
+                    results['reports'].append({
+                        'name': file,
+                        'url': f"/api/patients/{patient_id}/reports/{file}"
+                    })
+        
+        return jsonify(results)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'获取分析结果失败: {str(e)}'}), 500
+
+@app.route('/api/patients/<int:patient_id>/analysis_results/<filename>')
+@login_required
+def get_analysis_result_file(patient_id, filename):
+    """获取分析结果文件"""
+    try:
+        patient = Patient.query.get_or_404(patient_id)
+        
+        # 创建患者文件夹名称
+        folder_name = f"{patient.id}-{patient.username}"
+        folder_name = "".join(c for c in folder_name if c.isalnum() or c in ('-', '_'))
+        
+        # 分析结果目录
+        analysis_dir = os.path.join(PATIENTS_DATA_DIR, folder_name, 'analysis_results')
+        file_path = os.path.join(analysis_dir, filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'success': False, 'message': '文件不存在'}), 404
+        
+        return send_from_directory(analysis_dir, filename)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'获取文件失败: {str(e)}'}), 500
+
+@app.route('/api/patients/<int:patient_id>/reports/<filename>')
+@login_required
+def get_patient_report(patient_id, filename):
+    """获取患者报告文件"""
+    try:
+        patient = Patient.query.get_or_404(patient_id)
+        
+        # 创建患者文件夹名称
+        folder_name = f"{patient.id}-{patient.username}"
+        folder_name = "".join(c for c in folder_name if c.isalnum() or c in ('-', '_'))
+        
+        # 报告目录
+        reports_dir = os.path.join(PATIENTS_DATA_DIR, folder_name, 'reports')
+        file_path = os.path.join(reports_dir, filename)
+        
+        if not os.path.exists(file_path):
+            return jsonify({'success': False, 'message': '报告文件不存在'}), 404
+        
+        return send_from_directory(reports_dir, filename)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'获取报告失败: {str(e)}'}), 500
 
 @app.route('/api/patients/<int:patient_id>/videos/<filename>')
 @login_required
@@ -752,4 +864,4 @@ def api_delete_patient_video(patient_id, filename):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True, host='0.0.0.0', port=5004) 
+    app.run(debug=True, host='0.0.0.0', port=5015) 

@@ -498,7 +498,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 currentAnalysisId = data.analysisId;
                 showAnalysisResultSection();
-                displayAnalysisResults(data.results);
+                // 修复：使用正确的数据结构
+                displayAnalysisResults(data.analysisResult);
                 showAlert('分析完成', 'success');
             } else {
                 showAlert('分析失败：' + data.message, 'error');
@@ -549,14 +550,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function displayAnalysisResults(results) {
-        // 显示各角度分析结果
-        displayAngleResult('front', results.front);
-        displayAngleResult('side', results.side);
-        displayAngleResult('back', results.back);
+    function displayAnalysisResults(analysisResult) {
+        // 修复：根据后端返回的数据结构显示结果
+        const summary = analysisResult.summary || {};
         
         // 显示综合分析结果
-        displayComprehensiveResult(results.comprehensive);
+        displayComprehensiveResult({
+            overallScore: summary.function_score || 0,
+            assessment: summary.function_assessment || '暂无评估结果',
+            recommendations: summary.recommendations || []
+        });
+        
+        // 显示图表和视频链接
+        displayAnalysisFiles(analysisResult);
     }
 
     function displayAngleResult(angle, result) {
@@ -609,6 +615,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         }
+    }
+
+    function displayAnalysisFiles(analysisResult) {
+        // 显示分析结果文件（图表、视频、报告）
+        const filesSection = document.getElementById('analysisFilesSection');
+        if (!filesSection) return;
+        
+        let filesHtml = '<div class="analysis-files mt-4">';
+        
+        // 显示图表文件
+        if (analysisResult.chartPaths && Object.keys(analysisResult.chartPaths).length > 0) {
+            filesHtml += '<div class="file-group mb-3"><h5>📊 分析图表</h5><div class="row">';
+            Object.entries(analysisResult.chartPaths).forEach(([name, path]) => {
+                const displayName = name.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
+                filesHtml += `
+                    <div class="col-md-6 col-lg-4 mb-2">
+                        <a href="${path}" target="_blank" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="fas fa-chart-line me-2"></i>${displayName}
+                        </a>
+                    </div>
+                `;
+            });
+            filesHtml += '</div></div>';
+        }
+        
+        // 显示标注视频
+        if (analysisResult.videoOutputPaths && Object.keys(analysisResult.videoOutputPaths).length > 0) {
+            filesHtml += '<div class="file-group mb-3"><h5>🎥 标注视频</h5><div class="row">';
+            Object.entries(analysisResult.videoOutputPaths).forEach(([name, path]) => {
+                const displayName = name.replace(/_annotated\.avi/, ' 角度标注视频');
+                filesHtml += `
+                    <div class="col-md-6 col-lg-4 mb-2">
+                        <a href="${path}" target="_blank" class="btn btn-outline-success btn-sm w-100">
+                            <i class="fas fa-video me-2"></i>${displayName} (.avi)
+                        </a>
+                    </div>
+                `;
+            });
+            filesHtml += '</div></div>';
+        }
+        
+        // 显示报告文件
+        if (analysisResult.reportPath) {
+            filesHtml += `
+                <div class="file-group mb-3">
+                    <h5>📄 分析报告</h5>
+                    <a href="${analysisResult.reportPath}" target="_blank" class="btn btn-outline-info">
+                        <i class="fas fa-file-word me-2"></i>下载Word格式报告
+                    </a>
+                </div>
+            `;
+        }
+        
+        filesHtml += '</div>';
+        filesSection.innerHTML = filesHtml;
+        filesSection.style.display = 'block';
     }
 
     function exportResults() {
