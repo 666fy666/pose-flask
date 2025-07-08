@@ -522,15 +522,40 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 currentAnalysisId = data.analysisId;
-                showAnalysisResultSection();
-                // 修复：使用正确的数据结构
-                displayAnalysisResults(data.analysisResult);
-                showAlert('分析完成', 'success');
                 
-                // 分析完成后自动刷新历史记录
+                // 分析完成后，验证图片文件是否存在，然后显示结果
+                const chartPaths = data.analysisResult.chartPaths || {};
+                
+                // 首先等待一段时间让文件生成
                 setTimeout(() => {
-                    loadAnalysisHistory();
-                }, 1000); // 延迟1秒刷新，确保报告文件已生成
+                    // 验证图表文件是否存在
+                    verifyChartFilesExist(chartPaths).then(filesExist => {
+                        if (filesExist) {
+                            showAnalysisResultSection();
+                            displayAnalysisResults(data.analysisResult);
+                            showAlert('分析完成，图表已生成', 'success');
+                        } else {
+                            // 如果文件不存在，再等待一段时间后重试
+                            setTimeout(() => {
+                                verifyChartFilesExist(chartPaths).then(retryFilesExist => {
+                                    showAnalysisResultSection();
+                                    displayAnalysisResults(data.analysisResult);
+                                    if (retryFilesExist) {
+                                        showAlert('分析完成，图表已生成', 'success');
+                                    } else {
+                                        showAlert('分析完成，但部分图表文件可能还在生成中', 'warning');
+                                    }
+                                });
+                            }, 3000); // 再等待3秒
+                        }
+                        
+                        // 分析完成后自动刷新历史记录
+                        setTimeout(() => {
+                            loadAnalysisHistory();
+                        }, 1000); // 延迟1秒刷新，确保报告文件已生成
+                    });
+                }, 2000); // 延迟2秒开始检查，确保图片文件生成完成
+                
             } else {
                 showAlert('分析失败：' + data.message, 'error');
             }
@@ -772,16 +797,41 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let filesHtml = '<div class="analysis-files mt-4">';
         
-        // 显示图表文件
+        // 显示图表文件 - 改为直接显示图片
         if (analysisResult.chartPaths && Object.keys(analysisResult.chartPaths).length > 0) {
-            filesHtml += '<div class="file-group mb-3"><h5>📊 分析图表</h5><div class="row">';
+            filesHtml += '<div class="file-group mb-4"><h5><i class="fas fa-chart-line me-2"></i>分析图表</h5><div class="row">';
             Object.entries(analysisResult.chartPaths).forEach(([name, path]) => {
                 const displayName = name.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
                 filesHtml += `
-                    <div class="col-md-6 col-lg-4 mb-2">
-                        <a href="${path}" target="_blank" class="btn btn-outline-primary btn-sm w-100">
-                            <i class="fas fa-chart-line me-2"></i>${displayName}
-                        </a>
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h6 class="chart-title">${displayName}</h6>
+                                <div class="chart-actions">
+                                    <a href="${path}" target="_blank" class="btn btn-sm btn-outline-primary" title="在新窗口打开">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                    <a href="${path}" download class="btn btn-sm btn-outline-secondary" title="下载图片">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <img src="${path}" alt="${displayName}" class="analysis-chart-img" 
+                                     onload="this.parentElement.classList.add('loaded')" 
+                                     onerror="this.parentElement.classList.add('error'); this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <div class="chart-loading" style="display: none;">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                    <p class="text-muted mt-2">图片加载失败</p>
+                                </div>
+                                <div class="chart-loading-spinner">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                    <p class="text-muted mt-2">加载中...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 `;
             });
@@ -790,7 +840,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 显示标注视频
         if (analysisResult.videoOutputPaths && Object.keys(analysisResult.videoOutputPaths).length > 0) {
-            filesHtml += '<div class="file-group mb-3"><h5>🎥 标注视频</h5><div class="row">';
+            filesHtml += '<div class="file-group mb-3"><h5><i class="fas fa-video me-2"></i>标注视频</h5><div class="row">';
             Object.entries(analysisResult.videoOutputPaths).forEach(([name, path]) => {
                 const displayName = name.replace(/_annotated\.avi/, ' 角度标注视频');
                 filesHtml += `
@@ -808,7 +858,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (analysisResult.reportPath) {
             filesHtml += `
                 <div class="file-group mb-3">
-                    <h5>📄 分析报告</h5>
+                    <h5><i class="fas fa-file-word me-2"></i>分析报告</h5>
                     <a href="${analysisResult.reportPath}" target="_blank" class="btn btn-outline-info">
                         <i class="fas fa-file-word me-2"></i>下载Word格式报告
                     </a>
@@ -819,6 +869,54 @@ document.addEventListener('DOMContentLoaded', function() {
         filesHtml += '</div>';
         filesSection.innerHTML = filesHtml;
         filesSection.style.display = 'block';
+        
+        // 延迟检查图片加载状态
+        setTimeout(() => {
+            checkChartImagesLoaded();
+        }, 2000);
+    }
+    
+    function checkChartImagesLoaded() {
+        const chartImages = document.querySelectorAll('.analysis-chart-img');
+        chartImages.forEach(img => {
+            if (!img.complete) {
+                // 图片还在加载中，设置超时处理
+                setTimeout(() => {
+                    if (!img.complete) {
+                        img.parentElement.classList.add('error');
+                        img.style.display = 'none';
+                        const errorDiv = img.nextElementSibling;
+                        if (errorDiv && errorDiv.classList.contains('chart-loading')) {
+                            errorDiv.style.display = 'block';
+                        }
+                    }
+                }, 5000); // 5秒超时
+            }
+        });
+    }
+    
+    function verifyChartFilesExist(chartPaths) {
+        // 验证图表文件是否存在的函数
+        return new Promise((resolve) => {
+            if (!chartPaths || Object.keys(chartPaths).length === 0) {
+                resolve(true);
+                return;
+            }
+            
+            const checkPromises = Object.entries(chartPaths).map(([name, path]) => {
+                return new Promise((resolveCheck) => {
+                    const img = new Image();
+                    img.onload = () => resolveCheck(true);
+                    img.onerror = () => resolveCheck(false);
+                    img.src = path + '?t=' + new Date().getTime(); // 添加时间戳避免缓存
+                });
+            });
+            
+            Promise.all(checkPromises).then(results => {
+                const allExist = results.every(exists => exists);
+                resolve(allExist);
+            });
+        });
     }
 
     function exportResults() {

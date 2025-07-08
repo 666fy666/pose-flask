@@ -1410,4 +1410,167 @@ footer {
 
 #analysisStatusText.text-muted {
     color: #6c757d !important;
+}
+
+/* 分析图表卡片样式 */
+.chart-card {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.chart-title {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+    flex: 1;
+}
+
+.chart-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.chart-actions .btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+}
+
+.chart-container {
+    position: relative;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+}
+
+.analysis-chart-img {
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    object-fit: contain;
+    transition: opacity 0.3s ease;
+}
+
+.chart-container.loaded .analysis-chart-img {
+    opacity: 1;
+}
+
+.chart-container:not(.loaded) .analysis-chart-img {
+    opacity: 0;
+}
+
+.chart-loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 1;
+}
+
+.chart-container.loaded .chart-loading-spinner {
+    display: none;
+}
+
+.chart-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 2;
+}
+
+.chart-container.error .chart-loading-spinner {
+    display: none;
+}
+
+.chart-container.error .chart-loading {
+    display: block !important;
+}
+
+/* 文件组样式 */
+.file-group h5 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.file-group h5 i {
+    color: #007aff;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .chart-card {
+        margin-bottom: 1rem;
+    }
+    
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .chart-actions {
+        align-self: flex-end;
+    }
+    
+    .chart-container {
+        min-height: 150px;
+    }
+    
+    .analysis-chart-img {
+        max-height: 200px;
+    }
+}
+
+@media (max-width: 576px) {
+    .chart-card {
+        margin-bottom: 0.75rem;
+    }
+    
+    .chart-header {
+        padding: 10px 12px;
+    }
+    
+    .chart-title {
+        font-size: 0.85rem;
+    }
+    
+    .chart-actions .btn {
+        padding: 3px 6px;
+        font-size: 0.7rem;
+    }
+    
+    .chart-container {
+        min-height: 120px;
+    }
+    
+    .analysis-chart-img {
+        max-height: 150px;
+    }
 } 
