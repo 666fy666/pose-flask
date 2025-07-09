@@ -207,7 +207,8 @@ class DataProcessor:
         return charts
     
     def process_analysis_data(self, analysis_results: Dict[str, Any], 
-                            patient_name: str, patient_id: int) -> Dict[str, Any]:
+                            patient_name: str, patient_id: int, 
+                            patient_info: Dict[str, Any] = None) -> Dict[str, Any]:
         """
         处理分析数据，生成报告所需的数据结构
         
@@ -215,16 +216,35 @@ class DataProcessor:
             analysis_results: 分析结果
             patient_name: 患者姓名
             patient_id: 患者ID
+            patient_info: 患者详细信息（年龄、性别、身高、体重等）
             
         Returns:
             Dict[str, Any]: 处理后的数据
         """
+        # 准备患者基本信息
+        base_patient_info = {
+            'id': patient_id,
+            'name': patient_name,
+            'analysis_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        # 如果提供了完整的患者信息，则合并到基本信息中
+        if patient_info:
+            base_patient_info.update({
+                'age': patient_info.get('age', 0),
+                'gender': patient_info.get('gender', ''),
+                'height': patient_info.get('height', 0),
+                'weight': patient_info.get('weight', 0),
+                'symptoms': patient_info.get('symptoms', ''),
+                'duration': patient_info.get('duration', 0),
+                'treatment': patient_info.get('treatment', ''),
+                'project': patient_info.get('project', ''),
+                'fill_person': patient_info.get('fill_person', ''),
+                'address': patient_info.get('address', '')
+            })
+        
         processed_data = {
-            'patient_info': {
-                'id': patient_id,
-                'name': patient_name,
-                'analysis_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            },
+            'patient_info': base_patient_info,
             'left_shoulder_data': {},
             'right_shoulder_data': {},
             'wrist_data': {},

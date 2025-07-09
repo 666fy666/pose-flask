@@ -43,6 +43,47 @@ $(document).ready(function() {
         addPatient();
     });
 
+    // 表单字段验证
+    function validatePatientForm() {
+        const name = $('#name').val().trim();
+        const gender = $('#gender').val();
+        const age = $('#age').val();
+        const height = $('#height').val();
+        const weight = $('#weight').val();
+        
+        if (!name) {
+            showToast('请输入用户名', 'warning');
+            $('#name').focus();
+            return false;
+        }
+        
+        if (!gender) {
+            showToast('请选择性别', 'warning');
+            $('#gender').focus();
+            return false;
+        }
+        
+        if (!age || age < 0 || age > 150) {
+            showToast('请输入有效的年龄(0-150)', 'warning');
+            $('#age').focus();
+            return false;
+        }
+        
+        if (!height || height < 50 || height > 300) {
+            showToast('请输入有效的身高(50-300cm)', 'warning');
+            $('#height').focus();
+            return false;
+        }
+        
+        if (!weight || weight < 10 || weight > 500) {
+            showToast('请输入有效的体重(10-500kg)', 'warning');
+            $('#weight').focus();
+            return false;
+        }
+        
+        return true;
+    }
+
     // 导出功能按钮事件
     $('#exportExcelBtn').click(function() {
         exportData('excel');
@@ -152,7 +193,7 @@ $(document).ready(function() {
         tbody.empty();
 
         if (patients.length === 0) {
-            tbody.html('<tr><td colspan="10" class="text-center text-muted">暂无患者数据</td></tr>');
+            tbody.html('<tr><td colspan="11" class="text-center text-muted">暂无患者数据</td></tr>');
             return;
         }
 
@@ -172,7 +213,8 @@ $(document).ready(function() {
                     <td>${patient.height || '-'}</td>
                     <td>${patient.weight || '-'}</td>
                     <td>${bmi}</td>
-                    <td>${patient.diagnosis || '-'}</td>
+                    <td>${patient.symptoms || '-'}</td>
+                    <td>${patient.project || '-'}</td>
                     <td>
                         <div class="btn-group btn-group-sm" role="group">
                             <button type="button" class="btn btn-outline-primary view-patient" data-id="${patient.id}" title="查看详情">
@@ -255,6 +297,10 @@ $(document).ready(function() {
 
     // 添加患者
     function addPatient() {
+        if (!validatePatientForm()) {
+            return;
+        }
+        
         const formData = {};
         $('#addPatientForm').serializeArray().forEach(function(item) {
             formData[item.name] = item.value;
@@ -301,8 +347,12 @@ $(document).ready(function() {
         $('#editAge').val(patient.age);
         $('#editHeight').val(patient.height);
         $('#editWeight').val(patient.weight);
-        $('#editDiagnosis').val(patient.diagnosis);
-        $('#editNotes').val(patient.notes);
+        $('#editAddress').val(patient.address);
+        $('#editSymptoms').val(patient.symptoms);
+        $('#editDuration').val(patient.duration);
+        $('#editTreatment').val(patient.treatment);
+        $('#editProject').val(patient.project);
+        $('#editFillPerson').val(patient.fill_person);
 
         $('#editPatientModal').modal('show');
     }

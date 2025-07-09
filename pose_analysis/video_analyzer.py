@@ -146,7 +146,8 @@ class VideoAnalyzer:
     
     def analyze_patient_videos(self, patient_id: int, patient_name: str, 
                              video_paths: Dict[str, str], conf: float = 0.25, 
-                             iou: float = 0.45) -> Dict[str, Any]:
+                             iou: float = 0.45, stop_check_func=None,
+                             patient_info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         分析患者的所有视频文件
         
@@ -156,6 +157,8 @@ class VideoAnalyzer:
             video_paths: 视频文件路径字典 {'front': path, 'side': path, 'back': path}
             conf: 置信度阈值
             iou: IoU阈值
+            stop_check_func: 停止检查函数，返回True表示需要停止
+            patient_info: 患者详细信息（年龄、性别、身高、体重等）
             
         Returns:
             Dict[str, Any]: 综合分析结果
@@ -176,6 +179,11 @@ class VideoAnalyzer:
         analysis_results = {}
         for angle, video_path in video_paths.items():
             if video_path and os.path.exists(video_path):
+                # 检查是否需要停止
+                if stop_check_func and stop_check_func():
+                    print(f"分析被停止，正在处理{angle}角度视频")
+                    break
+                    
                 try:
                     result = self.analyze_video(video_path, angle, conf, iou)
                     analysis_results[angle] = result
@@ -183,21 +191,35 @@ class VideoAnalyzer:
                     print(f"分析{angle}角度视频失败: {str(e)}")
                     analysis_results[angle] = None
         
+        # 检查是否需要停止
+        if stop_check_func and stop_check_func():
+            print("分析被停止，跳过后续处理")
+            return None
+        
         # 生成分析图表
         charts_data = self.data_processor.generate_charts(analysis_results, patient_name)
         
         # 保存图表到文件
         chart_paths = {}
         for chart_name, chart_data in charts_data.items():
+            if stop_check_func and stop_check_func():
+                print("分析被停止，跳过图表生成")
+                break
+                
             if chart_data:
                 chart_path = os.path.join(analysis_dir, f"{chart_name}.png")
                 chart_data.savefig(chart_path, dpi=300, bbox_inches='tight')
                 plt.close(chart_data)  # 修复：使用plt.close()而不是chart_data.close()
                 chart_paths[chart_name] = chart_path
         
+        # 检查是否需要停止
+        if stop_check_func and stop_check_func():
+            print("分析被停止，跳过报告生成")
+            return None
+        
         # 生成分析报告
         report_data = self.data_processor.process_analysis_data(
-            analysis_results, patient_name, patient_id
+            analysis_results, patient_name, patient_id, patient_info
         )
         
         # 保存分析数据

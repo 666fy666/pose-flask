@@ -111,13 +111,14 @@
                                                         <input type="checkbox" id="selectAll">
                                                     </th>
                                                     <th>ID</th>
-                                                    <th>姓名</th>
+                                                    <th>用户名</th>
                                                     <th>性别</th>
                                                     <th>年龄</th>
                                                     <th>身高(cm)</th>
                                                     <th>体重(kg)</th>
                                                     <th>BMI</th>
-                                                    <th>诊断</th>
+                                                    <th>肩部症状</th>
+                                                    <th>研究项目</th>
                                                     <th>操作</th>
                                                 </tr>
                                             </thead>
@@ -152,9 +153,16 @@
                                 <div class="card-body">
                                     <form id="addPatientForm">
                                         <div class="row g-3">
+                                            <!-- 基本信息 -->
+                                            <div class="col-12">
+                                                <h6 class="text-primary mb-3">
+                                                    <i class="fas fa-user me-2"></i>基本信息
+                                                </h6>
+                                            </div>
+                                            
                                             <div class="col-md-6">
                                                 <label for="name" class="form-label">
-                                                    <i class="fas fa-user me-2"></i>姓名
+                                                    <i class="fas fa-user me-2"></i>用户名
                                                 </label>
                                                 <input type="text" class="form-control" id="name" name="name" required>
                                             </div>
@@ -192,22 +200,71 @@
                                             </div>
                                             
                                             <div class="col-12">
-                                                <label for="diagnosis" class="form-label">
-                                                    <i class="fas fa-stethoscope me-2"></i>诊断
+                                                <label for="address" class="form-label">
+                                                    <i class="fas fa-map-marker-alt me-2"></i>地址
                                                 </label>
-                                                <textarea class="form-control" id="diagnosis" name="diagnosis" rows="3" placeholder="请输入诊断信息"></textarea>
+                                                <input type="text" class="form-control" id="address" name="address" placeholder="请输入地址">
+                                            </div>
+                                            
+                                            <!-- 临床信息 -->
+                                            <div class="col-12">
+                                                <h6 class="text-primary mb-3">
+                                                    <i class="fas fa-stethoscope me-2"></i>临床信息
+                                                </h6>
                                             </div>
                                             
                                             <div class="col-12">
-                                                <label for="notes" class="form-label">
-                                                    <i class="fas fa-notes-medical me-2"></i>备注
+                                                <label for="symptoms" class="form-label">
+                                                    <i class="fas fa-exclamation-triangle me-2"></i>肩部症状
                                                 </label>
-                                                <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="请输入备注信息"></textarea>
+                                                <textarea class="form-control" id="symptoms" name="symptoms" rows="3" placeholder="请输入肩部症状描述"></textarea>
+                                            </div>
+                                            
+                                            <div class="col-md-6">
+                                                <label for="duration" class="form-label">
+                                                    <i class="fas fa-clock me-2"></i>持续时间(天)
+                                                </label>
+                                                <input type="number" class="form-control" id="duration" name="duration" min="0" placeholder="请输入持续时间">
+                                            </div>
+                                            
+                                            <div class="col-md-6">
+                                                <label for="treatment" class="form-label">
+                                                    <i class="fas fa-pills me-2"></i>治疗史
+                                                </label>
+                                                <input type="text" class="form-control" id="treatment" name="treatment" placeholder="请输入治疗史">
+                                            </div>
+                                            
+                                            <!-- 项目对接信息 -->
+                                            <div class="col-12">
+                                                <h6 class="text-primary mb-3">
+                                                    <i class="fas fa-project-diagram me-2"></i>项目对接信息
+                                                </h6>
+                                            </div>
+                                            
+                                            <div class="col-12">
+                                                <label for="project" class="form-label">
+                                                    <i class="fas fa-folder me-2"></i>研究项目
+                                                </label>
+                                                <input type="text" class="form-control" id="project" name="project" placeholder="请输入研究项目名称">
+                                            </div>
+                                            
+                                            <!-- 填写人 -->
+                                            <div class="col-12">
+                                                <h6 class="text-primary mb-3">
+                                                    <i class="fas fa-user-edit me-2"></i>填写人
+                                                </h6>
+                                            </div>
+                                            
+                                            <div class="col-12">
+                                                <label for="fill_person" class="form-label">
+                                                    <i class="fas fa-user-md me-2"></i>填写人
+                                                </label>
+                                                <input type="text" class="form-control" id="fill_person" name="fill_person" placeholder="请输入填写人姓名">
                                             </div>
                                             
                                             <div class="col-12">
                                                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                                    <button type="reset" class="btn btn-secondary">
+                                                    <button type="reset" class="btn btn-primary">
                                                         <i class="fas fa-undo me-2"></i>重置
                                                     </button>
                                                     <button type="submit" class="btn btn-primary">
@@ -311,8 +368,15 @@
                 <form id="editPatientForm">
                     <input type="hidden" id="editPatientId" name="id">
                     <div class="row g-3">
+                        <!-- 基本信息 -->
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-user me-2"></i>基本信息
+                            </h6>
+                        </div>
+                        
                         <div class="col-md-6">
-                            <label for="editName" class="form-label">姓名</label>
+                            <label for="editName" class="form-label">用户名</label>
                             <input type="text" class="form-control" id="editName" name="name" required>
                         </div>
                         <div class="col-md-6">
@@ -335,12 +399,52 @@
                             <input type="number" class="form-control" id="editWeight" name="weight" min="10" max="500" step="0.1" required>
                         </div>
                         <div class="col-12">
-                            <label for="editDiagnosis" class="form-label">诊断</label>
-                            <textarea class="form-control" id="editDiagnosis" name="diagnosis" rows="3"></textarea>
+                            <label for="editAddress" class="form-label">地址</label>
+                            <input type="text" class="form-control" id="editAddress" name="address">
                         </div>
+                        
+                        <!-- 临床信息 -->
                         <div class="col-12">
-                            <label for="editNotes" class="form-label">备注</label>
-                            <textarea class="form-control" id="editNotes" name="notes" rows="3"></textarea>
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-stethoscope me-2"></i>临床信息
+                            </h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="editSymptoms" class="form-label">肩部症状</label>
+                            <textarea class="form-control" id="editSymptoms" name="symptoms" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editDuration" class="form-label">持续时间(天)</label>
+                            <input type="number" class="form-control" id="editDuration" name="duration" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editTreatment" class="form-label">治疗史</label>
+                            <input type="text" class="form-control" id="editTreatment" name="treatment">
+                        </div>
+                        
+                        <!-- 项目对接信息 -->
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-project-diagram me-2"></i>项目对接信息
+                            </h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="editProject" class="form-label">研究项目</label>
+                            <input type="text" class="form-control" id="editProject" name="project">
+                        </div>
+                        
+                        <!-- 填写人 -->
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-user-edit me-2"></i>填写人
+                            </h6>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="editFillPerson" class="form-label">填写人</label>
+                            <input type="text" class="form-control" id="editFillPerson" name="fill_person">
                         </div>
                     </div>
                 </form>
@@ -370,7 +474,7 @@
                 <p class="text-muted">此操作不可撤销，请谨慎操作。</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
                     <i class="fas fa-trash me-2"></i>确认删除
                 </button>

@@ -15,6 +15,86 @@
 
 ### 技术改进记录
 
+#### 患者信息传递修复 (2024年最新)
+**问题**: 
+在生成的Word报告中，患者信息（年龄、性别、身高、体重等）显示为默认值（0或空），而不是数据库中录入的真实信息。
+
+**解决方案**: 
+1. **完整患者信息传递**: 修改数据处理器，支持接收并传递完整的患者详细信息
+2. **数据库信息获取**: 在分析过程中从数据库获取患者的完整信息
+3. **报告数据更新**: 确保报告生成器使用正确的患者信息
+
+**修改的文件**:
+- `pose_analysis/data_processor.py`: 修改`process_analysis_data`方法，添加`patient_info`参数支持
+- `pose_analysis/video_analyzer.py`: 修改`analyze_patient_videos`方法，传递完整的患者信息
+- `app.py`: 在`run_analysis_task`中获取并传递患者详细信息
+
+**技术细节**:
+```python
+# 获取患者详细信息
+with app.app_context():
+    patient = Patient.query.get(patient_id)
+    patient_info = {
+        'age': patient.age,
+        'gender': patient.gender,
+        'height': patient.height,
+        'weight': patient.weight,
+        'symptoms': patient.symptoms,
+        'duration': patient.duration,
+        'treatment': patient.treatment,
+        'project': patient.project,
+        'fill_person': patient.fill_person,
+        'address': patient.address
+    }
+
+# 传递到分析器
+analysis_result = analyzer.analyze_patient_videos(
+    patient_id=patient_id,
+    patient_name=patient_name,
+    video_paths=video_paths,
+    conf=confidence_threshold,
+    iou=0.45,
+    stop_check_func=check_stop,
+    patient_info=patient_info
+)
+```
+
+#### 分析控制功能优化 (2024年最新)
+**问题**: 
+1. 停止按钮无法真正停止分析任务
+2. 进度条逻辑不合理，在分析完成前就显示100%
+3. 停止按钮样式不够醒目
+
+**解决方案**: 
+1. **真正的停止功能**: 实现后台线程管理和状态控制，支持真正停止分析任务
+2. **智能进度条**: 进度条基于实际分析状态更新，图表加载完成后才显示100%
+3. **红色停止按钮**: 将停止按钮改为红色，更加醒目，并在分析过程中保持显示
+
+**修改的文件**:
+- `app.py`: 添加分析状态管理、后台线程控制、停止分析API
+- `static/js/ai_video.js`: 实现状态轮询、智能进度更新、真正的停止功能
+- `static/css/style.css`: 添加红色停止按钮样式
+- `templates/ai_video.html`: 确保停止按钮常驻显示
+
+**技术细节**:
+```python
+# 后台分析任务管理
+analysis_tasks = {}  # 存储正在进行的分析任务
+analysis_status = defaultdict(dict)  # 存储分析状态
+
+# 状态轮询机制
+function pollAnalysisStatus(analysisId) {
+    const pollInterval = setInterval(() => {
+        fetch(`/api/analysis_status/${analysisId}`)
+            .then(response => response.json())
+            .then(data => {
+                // 更新进度条和状态
+                updateProgressFromStatus(data.status);
+            });
+    }, 1000);
+}
+```
+
 #### 文件下载优化 (2024年最新)
 **问题**: 原有的下载按钮使用`<a href="..." download>`方式，在某些浏览器中会跳转到新页面而不是直接下载文件。
 
@@ -80,11 +160,11 @@ pose-flask/
 - **数据导出**: 支持患者数据导出功能
 
 #### 患者信息字段
-- 基本信息: 姓名、年龄、性别、身高、体重
-- 医疗信息: 诊断、治疗记录、病程、项目
-- 地址信息: 详细地址
-- 记录信息: 填写人、记录时间
-- AI评估: 运动评分、综合评分、分析报告
+- **基本信息**: 用户名、年龄、性别、身高、体重、地址
+- **临床信息**: 肩部症状、持续时间、治疗史
+- **项目对接信息**: 研究项目
+- **记录信息**: 填写人、记录时间
+- **AI评估**: 运动评分、综合评分、分析报告
 
 ### 3. AI视频分析系统
 
@@ -182,6 +262,48 @@ pose-flask/
 
 ## API接口文档
 
+### 分析控制API
+
+#### 开始分析
+```
+POST /api/analyze_video
+参数: {
+    "videos": {"front": {...}, "side": {...}, "back": {...}},
+    "analysisType": "comprehensive",
+    "confidenceThreshold": 50,
+    "patientId": 1
+}
+返回: {
+    "success": true,
+    "analysisId": "analysis_20241201_143022",
+    "message": "分析已开始，请等待完成"
+}
+```
+
+#### 获取分析状态
+```
+GET /api/analysis_status/{analysis_id}
+返回: {
+    "success": true,
+    "status": {
+        "status": "running|completed|error|stopped",
+        "progress": 75,
+        "message": "正在分析视频文件...",
+        "result": {...}  // 仅在完成时返回
+    }
+}
+```
+
+#### 停止分析
+```
+POST /api/stop_analysis/{analysis_id}
+返回: {
+    "success": true,
+    "message": "分析已停止",
+    "status": "stopped"
+}
+```
+
 ### 患者管理API
 
 #### 获取患者列表
@@ -258,7 +380,7 @@ POST /api/analyze_video
 #### 停止分析
 ```
 POST /api/stop_analysis/{analysis_id}
-返回: 停止成功状态
+返回: 提示信息（不真正停止分析）
 ```
 
 #### 导出结果

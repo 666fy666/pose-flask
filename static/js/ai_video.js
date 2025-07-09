@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // 原有的分析逻辑
+        // 检查是否已有分析在进行
         if (analysisInProgress) {
             showAlert('分析正在进行中，请稍候', 'warning');
             return;
@@ -523,78 +523,174 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 currentAnalysisId = data.analysisId;
                 
-                // 分析完成后，验证图片文件是否存在，然后显示结果
-                const chartPaths = data.analysisResult.chartPaths || {};
-                
-                // 首先等待一段时间让文件生成
-                setTimeout(() => {
-                    // 验证图表文件是否存在
-                    verifyChartFilesExist(chartPaths).then(filesExist => {
-                        if (filesExist) {
-                            showAnalysisResultSection();
-                            displayAnalysisResults(data.analysisResult);
-                            showAlert('分析完成，图表已生成', 'success');
-                        } else {
-                            // 如果文件不存在，再等待一段时间后重试
-                            setTimeout(() => {
-                                verifyChartFilesExist(chartPaths).then(retryFilesExist => {
-                                    showAnalysisResultSection();
-                                    displayAnalysisResults(data.analysisResult);
-                                    if (retryFilesExist) {
-                                        showAlert('分析完成，图表已生成', 'success');
-                                    } else {
-                                        showAlert('分析完成，但部分图表文件可能还在生成中', 'warning');
-                                    }
-                                });
-                            }, 3000); // 再等待3秒
-                        }
-                        
-                        // 分析完成后自动刷新历史记录
-                        setTimeout(() => {
-                            loadAnalysisHistory();
-                        }, 1000); // 延迟1秒刷新，确保报告文件已生成
-                    });
-                }, 2000); // 延迟2秒开始检查，确保图片文件生成完成
+                // 开始轮询分析状态
+                pollAnalysisStatus(data.analysisId);
                 
             } else {
                 showAlert('分析失败：' + data.message, 'error');
+                analysisInProgress = false;
+                updateAnalysisButtons(false);
+                completeProgressAnimation();
             }
         })
         .catch(error => {
             showAlert('分析失败：' + error.message, 'error');
-            
-            // 分析失败时也刷新历史记录，以防有部分文件生成
-            setTimeout(() => {
-                loadAnalysisHistory();
-            }, 1000);
-        })
-        .finally(() => {
             analysisInProgress = false;
             updateAnalysisButtons(false);
-            // 完成进度条动画
             completeProgressAnimation();
         });
     }
 
-    function stopAnalysis() {
-        if (currentAnalysisId) {
-            fetch(`/api/stop_analysis/${currentAnalysisId}`, {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showAlert('分析已停止', 'info');
+    function pollAnalysisStatus(analysisId) {
+        const pollInterval = setInterval(() => {
+            fetch(`/api/analysis_status/${analysisId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const status = data.status;
+                        
+                        // 更新进度条
+                        updateProgressFromStatus(status);
+                        
+                        if (status.status === 'completed') {
+                            // 分析完成
+                            clearInterval(pollInterval);
+                            analysisInProgress = false;
+                            updateAnalysisButtons(false);
+                            
+                            // 等待图表文件完全生成后再显示100%
+                            if (status.result && status.result.chartFilesExist) {
+                                completeProgressAnimation();
+                                showAnalysisResultSection();
+                                displayAnalysisResults(status.result);
+                                showAlert('分析完成，图表已生成', 'success');
+                            } else {
+                                // 如果图表文件不存在，等待一段时间后重试
+                                setTimeout(() => {
+                                    verifyChartFilesExist(status.result.chartPaths || {}).then(filesExist => {
+                                        completeProgressAnimation();
+                                        showAnalysisResultSection();
+                                        displayAnalysisResults(status.result);
+                                        if (filesExist) {
+                                            showAlert('分析完成，图表已生成', 'success');
+                                        } else {
+                                            showAlert('分析完成，但部分图表文件可能还在生成中', 'warning');
+                                        }
+                                    });
+                                }, 2000);
+                            }
+                            
+                            // 刷新历史记录
+                            setTimeout(() => {
+                                loadAnalysisHistory();
+                            }, 1000);
+                            
+                        } else if (status.status === 'error') {
+                            // 分析出错
+                            clearInterval(pollInterval);
+                            analysisInProgress = false;
+                            updateAnalysisButtons(false);
+                            completeProgressAnimation();
+                            showAlert('分析失败：' + status.message, 'error');
+                            
+                        } else if (status.status === 'stopped') {
+                            // 分析被停止
+                            clearInterval(pollInterval);
+                            analysisInProgress = false;
+                            updateAnalysisButtons(false);
+                            completeProgressAnimation();
+                            showAlert('分析已被停止', 'info');
+                        }
+                        // 如果状态是running，继续轮询
+                        
+                    } else {
+                        // 获取状态失败
+                        clearInterval(pollInterval);
+                        analysisInProgress = false;
+                        updateAnalysisButtons(false);
+                        completeProgressAnimation();
+                        showAlert('获取分析状态失败：' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    clearInterval(pollInterval);
                     analysisInProgress = false;
                     updateAnalysisButtons(false);
-                    // 重置进度条
-                    resetProgressAnimation();
-                }
-            })
-            .catch(error => {
-                showAlert('停止分析失败：' + error.message, 'error');
-            });
+                    completeProgressAnimation();
+                    showAlert('获取分析状态失败：' + error.message, 'error');
+                });
+        }, 1000); // 每秒轮询一次
+    }
+
+    function updateProgressFromStatus(status) {
+        const progressButton = document.getElementById('startAnalysisBtn');
+        const progressRing = progressButton.querySelector('.progress-ring-progress');
+        const progressText = progressButton.querySelector('.progress-text');
+        const buttonText = progressButton.querySelector('.button-text');
+        
+        if (status.progress !== undefined) {
+            // 计算圆的周长
+            const radius = 27;
+            const circumference = 2 * Math.PI * radius;
+            
+            // 更新进度
+            const progressPercent = Math.round(status.progress);
+            const offset = circumference - (progressPercent / 100) * circumference;
+            
+            progressRing.style.strokeDashoffset = offset;
+            progressText.textContent = progressPercent + '%';
+            
+            // 更新按钮文本
+            if (status.message) {
+                buttonText.textContent = status.message;
+            } else if (progressPercent < 30) {
+                buttonText.textContent = '初始化中';
+            } else if (progressPercent < 60) {
+                buttonText.textContent = '分析中';
+            } else if (progressPercent < 90) {
+                buttonText.textContent = '处理中';
+            } else {
+                buttonText.textContent = '完成中';
+            }
         }
+    }
+
+    function stopAnalysis() {
+        if (!currentAnalysisId) {
+            showAlert('没有正在进行的分析任务', 'warning');
+            return;
+        }
+        
+        if (!analysisInProgress) {
+            showAlert('没有正在进行的分析任务', 'warning');
+            return;
+        }
+        
+        // 确认停止
+        if (!confirm('确定要停止当前的分析任务吗？此操作不可撤销。')) {
+            return;
+        }
+        
+        // 调用停止API
+        fetch(`/api/stop_analysis/${currentAnalysisId}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('分析已停止', 'info');
+                analysisInProgress = false;
+                updateAnalysisButtons(false);
+                // 重置进度条
+                resetProgressAnimation();
+                currentAnalysisId = null;
+            } else {
+                showAlert('停止分析失败：' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showAlert('停止分析失败：' + error.message, 'error');
+        });
     }
 
     function resetProgressAnimation() {
@@ -633,7 +729,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 startBtn.disabled = false;
             }
         }
-        if (stopBtn) stopBtn.style.display = analyzing ? 'inline-block' : 'none';
+        
+        // 停止分析按钮保持常驻显示，根据分析状态启用/禁用
+        if (stopBtn) {
+            stopBtn.style.display = 'inline-block';
+            stopBtn.disabled = !analyzing;
+        }
+        
         if (exportBtn) exportBtn.style.display = analyzing ? 'none' : 'inline-block';
     }
 
@@ -651,38 +753,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // 设置初始状态
         progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
         progressRing.style.strokeDashoffset = circumference;
+        progressText.textContent = '0%';
+        buttonText.textContent = '开始分析';
         
-        // 模拟进度更新
-        let progress = 0;
-        const progressInterval = setInterval(() => {
-            if (!analysisInProgress) {
-                clearInterval(progressInterval);
-                return;
-            }
-            
-            progress += Math.random() * 15; // 随机增加进度
-            if (progress > 90) progress = 90; // 最大到90%，等待实际完成
-            
-            const progressPercent = Math.round(progress);
-            const offset = circumference - (progressPercent / 100) * circumference;
-            
-            progressRing.style.strokeDashoffset = offset;
-            progressText.textContent = progressPercent + '%';
-            
-            // 更新按钮文本
-            if (progressPercent < 30) {
-                buttonText.textContent = '初始化中';
-            } else if (progressPercent < 60) {
-                buttonText.textContent = '分析中';
-            } else if (progressPercent < 90) {
-                buttonText.textContent = '处理中';
-            } else {
-                buttonText.textContent = '完成中';
-            }
-        }, 500);
-        
-        // 保存interval ID以便后续清除
-        progressButton.progressInterval = progressInterval;
+        // 清除之前的interval
+        if (progressButton.progressInterval) {
+            clearInterval(progressButton.progressInterval);
+            progressButton.progressInterval = null;
+        }
     }
 
     function completeProgressAnimation() {
@@ -712,7 +790,7 @@ document.addEventListener('DOMContentLoaded', function() {
             progressRing.style.strokeDashoffset = circumference;
             progressText.textContent = '0%';
             buttonText.textContent = '开始分析';
-        }, 1000);
+        }, 2000); // 延长显示时间到2秒
     }
 
     function showAnalysisResultSection() {

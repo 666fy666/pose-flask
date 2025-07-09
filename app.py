@@ -12,6 +12,9 @@ import numpy as np
 from ultralytics import YOLO
 import json
 import shutil
+import threading
+import time
+from collections import defaultdict
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # 请更改为安全的密钥
@@ -27,6 +30,10 @@ os.makedirs(PATIENTS_DATA_DIR, exist_ok=True)
 
 # 数据库模型
 db = SQLAlchemy(app)
+
+# 全局变量用于管理分析状态
+analysis_tasks = {}  # 存储正在进行的分析任务
+analysis_status = defaultdict(dict)  # 存储分析状态
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -180,18 +187,18 @@ def api_patients():
         patient.username = data.get('name', '')  # 使用name字段作为username
         patient.age = data.get('age')
         patient.gender = data.get('gender')
-        patient.symptoms = data.get('diagnosis', '')  # 使用diagnosis字段作为symptoms
+        patient.symptoms = data.get('symptoms', '')  # 肩部症状
         patient.duration = data.get('duration')
-        patient.treatment = data.get('treatment')
-        patient.project = data.get('project')
+        patient.treatment = data.get('treatment', '')  # 治疗史
+        patient.project = data.get('project', '')  # 研究项目
         patient.ai_motion_score = data.get('ai_motion_score')
         patient.ai_motion_report = data.get('ai_motion_report')
         patient.ai_comprehensive_score = data.get('ai_comprehensive_score')
         patient.ai_comprehensive_report = data.get('ai_comprehensive_report')
-        patient.fill_person = data.get('fill_person', '')
+        patient.fill_person = data.get('fill_person', '')  # 填写人
         patient.height = data.get('height')
         patient.weight = data.get('weight')
-        patient.address = data.get('address', '')
+        patient.address = data.get('address', '')  # 地址
         db.session.add(patient)
         db.session.commit()
         return jsonify({'success': True, 'id': patient.id})
@@ -243,10 +250,17 @@ def api_patients():
                 'gender': p.gender,
                 'height': p.height,
                 'weight': p.weight,
-                'diagnosis': p.symptoms,  # 将symptoms映射为diagnosis
+                'symptoms': p.symptoms,  # 肩部症状
+                'duration': p.duration,  # 持续时间
+                'treatment': p.treatment,  # 治疗史
+                'project': p.project,  # 研究项目
+                'ai_motion_score': p.ai_motion_score,  # AI运动评分
+                'ai_motion_report': p.ai_motion_report,  # AI运动报告
+                'ai_comprehensive_score': p.ai_comprehensive_score,  # AI综合评分
+                'ai_comprehensive_report': p.ai_comprehensive_report,  # AI综合报告
+                'fill_person': p.fill_person,  # 填写人
                 'record_time': p.record_time.strftime('%Y-%m-%d %H:%M:%S') if p.record_time else None,
-                'address': p.address,
-                'fill_person': p.fill_person
+                'address': p.address  # 地址
             }
             patients_data.append(patient_data)
         
@@ -284,17 +298,17 @@ def api_patient_detail(patient_id):
                 'gender': patient.gender,
                 'height': patient.height,
                 'weight': patient.weight,
-                'diagnosis': patient.symptoms,  # 将symptoms映射为diagnosis
-                'notes': patient.treatment,  # 将treatment映射为notes
-                'duration': patient.duration,
-                'project': patient.project,
-                'ai_motion_score': patient.ai_motion_score,
-                'ai_motion_report': patient.ai_motion_report,
-                'ai_comprehensive_score': patient.ai_comprehensive_score,
-                'ai_comprehensive_report': patient.ai_comprehensive_report,
-                'fill_person': patient.fill_person,
+                'symptoms': patient.symptoms,  # 肩部症状
+                'duration': patient.duration,  # 持续时间
+                'treatment': patient.treatment,  # 治疗史
+                'project': patient.project,  # 研究项目
+                'ai_motion_score': patient.ai_motion_score,  # AI运动评分
+                'ai_motion_report': patient.ai_motion_report,  # AI运动报告
+                'ai_comprehensive_score': patient.ai_comprehensive_score,  # AI综合评分
+                'ai_comprehensive_report': patient.ai_comprehensive_report,  # AI综合报告
+                'fill_person': patient.fill_person,  # 填写人
                 'record_time': patient.record_time.strftime('%Y-%m-%d %H:%M:%S') if patient.record_time else None,
-                'address': patient.address
+                'address': patient.address  # 地址
             }
         })
     except Exception as e:
@@ -345,9 +359,12 @@ def api_update_patient(patient_id):
         patient.gender = data.get('gender', patient.gender)
         patient.height = data.get('height', patient.height)
         patient.weight = data.get('weight', patient.weight)
-        patient.symptoms = data.get('diagnosis', patient.symptoms)
-        patient.treatment = data.get('notes', patient.treatment)
-        patient.address = data.get('address', patient.address)
+        patient.symptoms = data.get('symptoms', patient.symptoms)  # 肩部症状
+        patient.duration = data.get('duration', patient.duration)  # 持续时间
+        patient.treatment = data.get('treatment', patient.treatment)  # 治疗史
+        patient.project = data.get('project', patient.project)  # 研究项目
+        patient.fill_person = data.get('fill_person', patient.fill_person)  # 填写人
+        patient.address = data.get('address', patient.address)  # 地址
         
         db.session.commit()
         return jsonify({'success': True, 'message': '患者信息更新成功'})
@@ -507,6 +524,162 @@ def upload_video():
     except Exception as e:
         return jsonify({'success': False, 'message': f'保存文件失败: {str(e)}'}), 500
 
+def run_analysis_task(analysis_id, patient_id, patient_name, video_paths, confidence_threshold):
+    """在后台线程中运行分析任务"""
+    try:
+        # 初始化分析状态
+        analysis_status[analysis_id] = {
+            'status': 'running',
+            'progress': 0,
+            'message': '正在初始化分析...',
+            'stopped': False
+        }
+        
+        # 导入视频分析器
+        from pose_analysis.video_analyzer import VideoAnalyzer
+        
+        # 检查是否被停止
+        if analysis_status[analysis_id]['stopped']:
+            return
+        
+        # 创建视频分析器实例
+        analysis_status[analysis_id]['progress'] = 10
+        analysis_status[analysis_id]['message'] = '正在加载AI模型...'
+        analyzer = VideoAnalyzer("model/yolov8s-pose.pt")
+        
+        # 检查是否被停止
+        if analysis_status[analysis_id]['stopped']:
+            return
+        
+        # 执行视频分析
+        analysis_status[analysis_id]['progress'] = 30
+        analysis_status[analysis_id]['message'] = '正在分析视频文件...'
+        
+        # 创建停止检查函数
+        def check_stop():
+            return analysis_status[analysis_id].get('stopped', False)
+        
+        # 获取患者详细信息
+        with app.app_context():
+            patient = Patient.query.get(patient_id)
+            patient_info = None
+            if patient:
+                patient_info = {
+                    'age': patient.age,
+                    'gender': patient.gender,
+                    'height': patient.height,
+                    'weight': patient.weight,
+                    'symptoms': patient.symptoms,
+                    'duration': patient.duration,
+                    'treatment': patient.treatment,
+                    'project': patient.project,
+                    'fill_person': patient.fill_person,
+                    'address': patient.address
+                }
+        
+        analysis_result = analyzer.analyze_patient_videos(
+            patient_id=patient_id,
+            patient_name=patient_name,
+            video_paths=video_paths,
+            conf=confidence_threshold,
+            iou=0.45,
+            stop_check_func=check_stop,
+            patient_info=patient_info if patient_info else None
+        )
+        
+        # 检查是否被停止
+        if analysis_status[analysis_id]['stopped']:
+            return
+        
+        # 检查分析结果是否为空（被停止）
+        if analysis_result is None:
+            analysis_status[analysis_id]['status'] = 'stopped'
+            analysis_status[analysis_id]['message'] = '分析已被用户停止'
+            return
+        
+        # 更新患者数据库中的AI评估结果
+        analysis_status[analysis_id]['progress'] = 80
+        analysis_status[analysis_id]['message'] = '正在保存分析结果...'
+        
+        # 在应用上下文中执行数据库操作
+        with app.app_context():
+            patient = Patient.query.get(patient_id)
+            if patient and analysis_result.get('report_data', {}).get('summary'):
+                summary = analysis_result['report_data']['summary']
+                patient.ai_motion_score = summary.get('function_score', 0)
+                patient.ai_motion_report = summary.get('function_assessment', '')
+                patient.ai_comprehensive_score = summary.get('function_score', 0)
+                patient.ai_comprehensive_report = summary.get('function_assessment', '')
+                db.session.commit()
+        
+        # 导入JSON序列化器
+        from pose_analysis.json_serializer import convert_numpy_types
+        
+        # 转换分析结果中的numpy类型
+        summary = analysis_result.get('report_data', {}).get('summary', {})
+        serializable_summary = convert_numpy_types(summary)
+        
+        # 转换文件路径为API路径
+        chart_paths = {}
+        for chart_name, file_path in analysis_result.get('chart_paths', {}).items():
+            filename = os.path.basename(file_path)
+            chart_paths[chart_name] = f"/api/patients/{patient_id}/analysis_results/{filename}"
+        
+        video_output_paths = {}
+        for angle, file_path in analysis_result.get('video_output_paths', {}).items():
+            filename = os.path.basename(file_path)
+            video_output_paths[angle] = f"/api/patients/{patient_id}/analysis_results/{filename}"
+        
+        # 转换报告路径
+        report_path = ""
+        if analysis_result.get('report_path'):
+            filename = os.path.basename(analysis_result['report_path'])
+            report_path = f"/api/patients/{patient_id}/reports/{filename}"
+        
+        # 检查是否被停止
+        if analysis_status[analysis_id]['stopped']:
+            return
+        
+        # 更新最终状态
+        analysis_status[analysis_id]['progress'] = 90
+        analysis_status[analysis_id]['message'] = '正在生成图表...'
+        
+        # 等待图表文件生成完成
+        time.sleep(2)  # 给图表生成一些时间
+        
+        # 检查图表文件是否存在
+        chart_files_exist = True
+        for chart_name, file_path in analysis_result.get('chart_paths', {}).items():
+            if not os.path.exists(file_path):
+                chart_files_exist = False
+                break
+        
+        # 最终状态更新
+        if analysis_status[analysis_id]['stopped']:
+            return
+        
+        analysis_status[analysis_id]['progress'] = 100
+        analysis_status[analysis_id]['status'] = 'completed'
+        analysis_status[analysis_id]['message'] = '分析完成'
+        analysis_status[analysis_id]['result'] = {
+            'chartPaths': chart_paths,
+            'videoOutputPaths': video_output_paths,
+            'reportPath': report_path,
+            'summary': serializable_summary,
+            'chartFilesExist': chart_files_exist
+        }
+        
+        # 清理任务
+        if analysis_id in analysis_tasks:
+            del analysis_tasks[analysis_id]
+            
+    except Exception as e:
+        if analysis_id in analysis_status:
+            analysis_status[analysis_id]['status'] = 'error'
+            analysis_status[analysis_id]['message'] = f'分析失败: {str(e)}'
+        if analysis_id in analysis_tasks:
+            del analysis_tasks[analysis_id]
+
 @app.route('/api/analyze_video', methods=['POST'])
 @login_required
 def analyze_video():
@@ -546,73 +719,26 @@ def analyze_video():
         if not video_paths:
             return jsonify({'success': False, 'message': '没有找到有效的视频文件'}), 400
         
-        # 导入视频分析器
-        from pose_analysis.video_analyzer import VideoAnalyzer
+        # 生成分析ID
+        analysis_id = f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # 创建视频分析器实例
-        analyzer = VideoAnalyzer("model/yolov8s-pose.pt")
-        
-        # 执行视频分析
-        analysis_result = analyzer.analyze_patient_videos(
-            patient_id=patient.id,
-            patient_name=patient.username,
-            video_paths=video_paths,
-            conf=confidence_threshold,
-            iou=0.45
+        # 启动后台分析任务
+        analysis_thread = threading.Thread(
+            target=run_analysis_task,
+            args=(analysis_id, patient.id, patient.username, video_paths, confidence_threshold)
         )
+        analysis_thread.daemon = True
+        analysis_thread.start()
         
-        # 更新患者数据库中的AI评估结果
-        if analysis_result.get('report_data', {}).get('summary'):
-            summary = analysis_result['report_data']['summary']
-            patient.ai_motion_score = summary.get('function_score', 0)
-            patient.ai_motion_report = summary.get('function_assessment', '')
-            patient.ai_comprehensive_score = summary.get('function_score', 0)
-            patient.ai_comprehensive_report = summary.get('function_assessment', '')
-            db.session.commit()
+        # 保存任务引用
+        analysis_tasks[analysis_id] = analysis_thread
         
-        # 导入JSON序列化器
-        from pose_analysis.json_serializer import convert_numpy_types
-        
-        # 转换分析结果中的numpy类型
-        summary = analysis_result.get('report_data', {}).get('summary', {})
-        serializable_summary = convert_numpy_types(summary)
-        
-        # 转换文件路径为API路径
-        chart_paths = {}
-        for chart_name, file_path in analysis_result.get('chart_paths', {}).items():
-            filename = os.path.basename(file_path)
-            chart_paths[chart_name] = f"/api/patients/{patient.id}/analysis_results/{filename}"
-        
-        video_output_paths = {}
-        for angle, file_path in analysis_result.get('video_output_paths', {}).items():
-            filename = os.path.basename(file_path)
-            video_output_paths[angle] = f"/api/patients/{patient.id}/analysis_results/{filename}"
-        
-        # 转换报告路径
-        report_path = ""
-        if analysis_result.get('report_path'):
-            filename = os.path.basename(analysis_result['report_path'])
-            report_path = f"/api/patients/{patient.id}/reports/{filename}"
-        
-        # 返回分析结果
-        results = {
+        # 返回分析ID，让前端轮询状态
+        return jsonify({
             'success': True,
-            'analysisId': f"analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            'patientInfo': {
-                'id': patient.id,
-                'name': patient.username,
-                'age': patient.age,
-                'gender': patient.gender
-            },
-            'analysisResult': {
-                'chartPaths': chart_paths,
-                'videoOutputPaths': video_output_paths,
-                'reportPath': report_path,
-                'summary': serializable_summary
-            }
-        }
-        
-        return jsonify(results)
+            'analysisId': analysis_id,
+            'message': '分析已开始，请等待完成'
+        })
         
     except Exception as e:
         return jsonify({'success': False, 'message': f'分析失败: {str(e)}'}), 500
@@ -622,8 +748,59 @@ def analyze_video():
 @app.route('/api/stop_analysis/<analysis_id>', methods=['POST'])
 @login_required
 def stop_analysis(analysis_id):
-    # 模拟停止分析
-    return jsonify({'success': True, 'message': f'分析 {analysis_id} 已停止'})
+    """真正停止分析任务"""
+    try:
+        if analysis_id in analysis_tasks:
+            # 标记任务为停止状态
+            analysis_status[analysis_id]['stopped'] = True
+            analysis_status[analysis_id]['status'] = 'stopped'
+            analysis_status[analysis_id]['message'] = '分析已被用户停止'
+            
+            # 尝试终止线程（如果可能）
+            task = analysis_tasks[analysis_id]
+            if hasattr(task, 'cancel'):
+                task.cancel()
+            
+            # 从任务列表中移除
+            del analysis_tasks[analysis_id]
+            
+            return jsonify({
+                'success': True, 
+                'message': '分析已停止',
+                'status': 'stopped'
+            })
+        else:
+            return jsonify({
+                'success': False, 
+                'message': '未找到指定的分析任务'
+            }), 404
+            
+    except Exception as e:
+        return jsonify({
+            'success': False, 
+            'message': f'停止分析失败: {str(e)}'
+        }), 500
+
+@app.route('/api/analysis_status/<analysis_id>', methods=['GET'])
+@login_required
+def get_analysis_status(analysis_id):
+    """获取分析状态"""
+    try:
+        if analysis_id in analysis_status:
+            return jsonify({
+                'success': True,
+                'status': analysis_status[analysis_id]
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': '未找到指定的分析任务'
+            }), 404
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'获取状态失败: {str(e)}'
+        }), 500
 
 @app.route('/api/export_results/<analysis_id>', methods=['GET'])
 @login_required
@@ -970,4 +1147,4 @@ def api_delete_patient_report(patient_id, filename):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True, host='0.0.0.0', port=5050) 
+    app.run(debug=True, host='0.0.0.0', port=5051) 
