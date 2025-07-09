@@ -482,6 +482,130 @@
         </div>
     </div>
 </div>
+
+<!-- 患者详情模态框 -->
+<div class="modal fade" id="viewPatientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye me-2"></i>患者详情
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <!-- 基本信息 -->
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-user me-2"></i>基本信息
+                        </h6>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">用户名</label>
+                        <p class="form-control-plaintext" id="viewName">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">性别</label>
+                        <p class="form-control-plaintext" id="viewGender">-</p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">年龄</label>
+                        <p class="form-control-plaintext" id="viewAge">-</p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">身高(cm)</label>
+                        <p class="form-control-plaintext" id="viewHeight">-</p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">体重(kg)</label>
+                        <p class="form-control-plaintext" id="viewWeight">-</p>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">地址</label>
+                        <p class="form-control-plaintext" id="viewAddress">-</p>
+                    </div>
+                    
+                    <!-- 临床信息 -->
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-stethoscope me-2"></i>临床信息
+                        </h6>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label fw-bold">肩部症状</label>
+                        <p class="form-control-plaintext" id="viewSymptoms">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">持续时间(天)</label>
+                        <p class="form-control-plaintext" id="viewDuration">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">治疗史</label>
+                        <p class="form-control-plaintext" id="viewTreatment">-</p>
+                    </div>
+                    
+                    <!-- AI评估信息 -->
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-robot me-2"></i>AI评估信息
+                        </h6>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">AI综合评分</label>
+                        <p class="form-control-plaintext" id="viewAiComprehensiveScore">-</p>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">AI综合报告</label>
+                        <p class="form-control-plaintext" id="viewAiComprehensiveReport">-</p>
+                    </div>
+                    
+                    <!-- 项目对接信息 -->
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-project-diagram me-2"></i>项目对接信息
+                        </h6>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label fw-bold">研究项目</label>
+                        <p class="form-control-plaintext" id="viewProject">-</p>
+                    </div>
+                    
+                    <!-- 填写人 -->
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-user-edit me-2"></i>填写人
+                        </h6>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label fw-bold">填写人</label>
+                        <p class="form-control-plaintext" id="viewFillPerson">-</p>
+                    </div>
+                    
+                    <!-- 记录时间 -->
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-clock me-2"></i>记录时间
+                        </h6>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label fw-bold">记录时间</label>
+                        <p class="form-control-plaintext" id="viewRecordTime">-</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}

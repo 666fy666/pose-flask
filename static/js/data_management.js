@@ -423,14 +423,44 @@ $(document).ready(function() {
 
     // 查看患者详情
     function viewPatient(patientId) {
-        const patient = patients.find(p => p.id == patientId);
-        if (!patient) {
-            showToast('患者信息不存在', 'danger');
-            return;
-        }
+        showLoading('正在加载患者详情...');
 
-        // 这里可以实现查看患者详情的功能
-        showToast('查看患者详情功能待实现', 'info');
+        $.ajax({
+            url: '/api/patients/' + patientId,
+            method: 'GET',
+            success: function(response) {
+                hideLoading();
+                if (response.success) {
+                    const patient = response.data;
+                    
+                    // 填充患者详情信息
+                    $('#viewName').text(patient.name || '-');
+                    $('#viewGender').text(patient.gender || '-');
+                    $('#viewAge').text(patient.age || '-');
+                    $('#viewHeight').text(patient.height || '-');
+                    $('#viewWeight').text(patient.weight || '-');
+                    $('#viewAddress').text(patient.address || '-');
+                    $('#viewSymptoms').text(patient.symptoms || '-');
+                    $('#viewDuration').text(patient.duration || '-');
+                    $('#viewTreatment').text(patient.treatment || '-');
+                    $('#viewAiComprehensiveScore').text(patient.ai_comprehensive_score || '-');
+                    $('#viewAiComprehensiveReport').text(patient.ai_comprehensive_report || '-');
+                    $('#viewProject').text(patient.project || '-');
+                    $('#viewFillPerson').text(patient.fill_person || '-');
+                    $('#viewRecordTime').text(patient.record_time || '-');
+                    
+                    // 显示模态框
+                    $('#viewPatientModal').modal('show');
+                } else {
+                    showToast(response.message || '获取患者详情失败', 'danger');
+                }
+            },
+            error: function(xhr, status, error) {
+                hideLoading();
+                console.error('获取患者详情失败:', xhr.responseText);
+                showToast('获取患者详情失败: ' + (xhr.responseJSON?.message || error), 'danger');
+            }
+        });
     }
 
     // 导出选中的患者
