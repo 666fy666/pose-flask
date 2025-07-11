@@ -141,8 +141,97 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 清除当前患者选择
                 clearPatientSelection();
                 selectedPatient = null;
+                
+                // 清除视频状态
+                uploadedVideos = {
+                    front: null,
+                    side: null,
+                    back: null
+                };
+                
+                // 重置分析状态
+                analysisInProgress = false;
+                currentAnalysisId = null;
+                
+                // 重置时间轴数据
+                timelineData = {
+                    front: { start: 0, end: 0, duration: 0, isDragging: false, dragHandle: null },
+                    side: { start: 0, end: 0, duration: 0, isDragging: false, dragHandle: null },
+                    back: { start: 0, end: 0, duration: 0, isDragging: false, dragHandle: null }
+                };
+                
+                // 重置界面状态
                 updatePatientSelectionUI();
+                updateUploadStatusText();
+                updateAnalysisStatusText();
+                
+                // 重置分析按钮状态
+                updateAnalysisButtons(false);
+                
+                // 隐藏视频预览区域
+                const previewSection = document.getElementById('videoPreviewSection');
+                if (previewSection) {
+                    previewSection.style.display = 'none';
+                }
+                
+                // 隐藏分析结果区域
+                const resultSection = document.getElementById('analysisResultSection');
+                if (resultSection) {
+                    resultSection.style.display = 'none';
+                }
+                
+                // 隐藏分析控制区域
+                const controlSection = document.getElementById('analysisControlSection');
+                if (controlSection) {
+                    controlSection.style.display = 'none';
+                }
+                
+                // 展开上传卡片
+                expandVideoUploadSection();
+                
+                // 清除所有视频预览
+                const angles = ['front', 'side', 'back'];
+                angles.forEach(angle => {
+                    // 重置上传状态
+                    updateUploadStatus(angle, 'default');
+                    
+                    // 清除视频预览
+                    const videoElement = document.getElementById(angle + 'VideoPreview');
+                    if (videoElement) {
+                        videoElement.src = '';
+                        videoElement.load();
+                    }
+                    
+                    // 重置文件输入
+                    const fileInput = document.getElementById(angle + 'VideoFile');
+                    if (fileInput) {
+                        fileInput.value = '';
+                    }
+                    
+                    // 隐藏上传进度和操作按钮
+                    const progressElement = document.getElementById(angle + 'Progress');
+                    const actionsElement = document.getElementById(angle + 'Actions');
+                    if (progressElement) progressElement.style.display = 'none';
+                    if (actionsElement) actionsElement.style.display = 'none';
+                });
+                
+                // 清除分析历史记录显示
+                const historyTableBody = document.getElementById('historyTableBody');
+                if (historyTableBody) {
+                    historyTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                <i class="fas fa-info-circle me-2"></i>
+                                请先选择患者以查看分析历史记录
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                // 显示患者选择模态框
                 showPatientSelectModal();
+                
+                showAlert('已清除当前患者选择，请选择新患者', 'info');
             });
         }
         if (clearPatientBtn) {
@@ -1308,7 +1397,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 showAlert('患者选择成功，文件夹已创建', 'success');
                 
                 // 检查患者是否已有视频文件
-                checkPatientVideos(patientId);
+                checkPatientVideos(patientId).then(() => {
+                    // 加载分析历史记录
+                    loadAnalysisHistory();
+                });
             } else {
                 showAlert('创建患者文件夹失败：' + data.message, 'error');
             }
