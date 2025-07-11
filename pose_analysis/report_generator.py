@@ -99,10 +99,11 @@ class ReportGenerator:
         
         # 准备图片路径（使用相对路径）
         image_path = {
-            "left_shoulder_angle_speed": os.path.join(output_dir, "..", "analysis_results", "front_angle_analysis.png"),
-            "left_shoulder_angle_acceleration": os.path.join(output_dir, "..", "analysis_results", "front_acceleration_analysis.png"),
-            "right_shoulder_angle_speed": os.path.join(output_dir, "..", "analysis_results", "side_angle_analysis.png"),
-            "right_shoulder_angle_acceleration": os.path.join(output_dir, "..", "analysis_results", "side_acceleration_analysis.png")
+            "front_shoulder_angle_speed": os.path.join(output_dir, "..", "analysis_results", "正面_角度分析.png"),
+            "front_shoulder_angle_acceleration": os.path.join(output_dir, "..", "analysis_results", "正面_加速度分析.png"),
+            "side_shoulder_angle_speed": os.path.join(output_dir, "..", "analysis_results", "侧面_角度分析.png"),
+            "side_shoulder_angle_acceleration": os.path.join(output_dir, "..", "analysis_results", "侧面_加速度分析.png"),
+            "back_wrist_height": os.path.join(output_dir, "..", "analysis_results", "背面_手腕高度.png")
         }
         
         # 准备结果报告
@@ -137,9 +138,10 @@ class ReportGenerator:
         # 创建一个新的 Word 文档
         doc = Document()
 
-        # 添加文档标题,居中
+        # 添加文档标题，并设置居中
+        from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
         heading = doc.add_heading('肩关节运动报告', level=1)
-        heading.alignment = 1  # WD_PARAGRAPH_ALIGNMENT.CENTER, which is represented by 1
+        heading.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER  # 正确设置居中对齐
 
         # 添加段落
         doc.add_heading('一、一般信息', level=2)
@@ -253,33 +255,41 @@ class ReportGenerator:
         doc.add_page_break()
         
         # 小标题
-        doc.add_heading('5、左肩部角速度曲线图', level=3)
+        doc.add_heading('5、正面-肩部角度曲线图', level=3)
         # 添加图片
         try:
-            doc.add_picture(report_data['image_path']['left_shoulder_angle_speed'], width=Inches(5))
+            doc.add_picture(report_data['image_path']['front_shoulder_angle_speed'], width=Inches(5))
         except:
-            doc.add_paragraph('左肩部角速度曲线图（图片加载失败）')
+            doc.add_paragraph('正面-肩部角度曲线图（图片加载失败）')
             
-        doc.add_heading('6、左肩部角加速度曲线图', level=3)
+        doc.add_heading('6、正面-肩部加速度曲线图', level=3)
         # 添加图片
         try:
-            doc.add_picture(report_data['image_path']['left_shoulder_angle_acceleration'], width=Inches(5))
+            doc.add_picture(report_data['image_path']['front_shoulder_angle_acceleration'], width=Inches(5))
         except:
-            doc.add_paragraph('左肩部角加速度曲线图（图片加载失败）')
+            doc.add_paragraph('正面-肩部加速度曲线图（图片加载失败）')
 
-        doc.add_heading('7、右肩部角速度曲线图', level=3)
+        doc.add_heading('7、侧面-肩部角度曲线图', level=3)
         # 添加图片
         try:
-            doc.add_picture(report_data['image_path']['right_shoulder_angle_speed'], width=Inches(5))
+            doc.add_picture(report_data['image_path']['side_shoulder_angle_speed'], width=Inches(5))
         except:
-            doc.add_paragraph('右肩部角速度曲线图（图片加载失败）')
+            doc.add_paragraph('侧面-肩部角度曲线图（图片加载失败）')
             
-        doc.add_heading('8、右肩部角加速度曲线图', level=3)
+        doc.add_heading('8、侧面-肩部加速度曲线图', level=3)
         # 添加图片
         try:
-            doc.add_picture(report_data['image_path']['right_shoulder_angle_acceleration'], width=Inches(5))
+            doc.add_picture(report_data['image_path']['side_shoulder_angle_acceleration'], width=Inches(5))
         except:
-            doc.add_paragraph('右肩部角加速度曲线图（图片加载失败）')
+            doc.add_paragraph('侧面-肩部加速度曲线图（图片加载失败）')
+
+        doc.add_heading('9、背部-手腕高度图', level=3)
+        # 添加图片
+        try:
+            doc.add_picture(report_data['image_path']['back_wrist_height'], width=Inches(5))
+        except:
+            doc.add_paragraph('背部-手腕高度图（图片加载失败）')
+
         
         # 结果报告    
         doc.add_heading('三、结果报告', level=2)
