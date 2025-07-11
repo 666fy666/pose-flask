@@ -50,6 +50,7 @@ $(document).ready(function() {
         const age = $('#age').val();
         const height = $('#height').val();
         const weight = $('#weight').val();
+        const symptoms = $('#symptoms').val();
         
         if (!name) {
             showToast('请输入用户名', 'warning');
@@ -78,6 +79,12 @@ $(document).ready(function() {
         if (!weight || weight < 10 || weight > 500) {
             showToast('请输入有效的体重(10-500kg)', 'warning');
             $('#weight').focus();
+            return false;
+        }
+        
+        if (!symptoms) {
+            showToast('请选择肩部症状', 'warning');
+            $('#symptoms').focus();
             return false;
         }
         
@@ -359,6 +366,50 @@ $(document).ready(function() {
 
     // 保存患者编辑
     function savePatientEdit() {
+        // 验证编辑表单
+        const editName = $('#editName').val().trim();
+        const editGender = $('#editGender').val();
+        const editAge = $('#editAge').val();
+        const editHeight = $('#editHeight').val();
+        const editWeight = $('#editWeight').val();
+        const editSymptoms = $('#editSymptoms').val();
+        
+        if (!editName) {
+            showToast('请输入用户名', 'warning');
+            $('#editName').focus();
+            return;
+        }
+        
+        if (!editGender) {
+            showToast('请选择性别', 'warning');
+            $('#editGender').focus();
+            return;
+        }
+        
+        if (!editAge || editAge < 0 || editAge > 150) {
+            showToast('请输入有效的年龄(0-150)', 'warning');
+            $('#editAge').focus();
+            return;
+        }
+        
+        if (!editHeight || editHeight < 50 || editHeight > 300) {
+            showToast('请输入有效的身高(50-300cm)', 'warning');
+            $('#editHeight').focus();
+            return;
+        }
+        
+        if (!editWeight || editWeight < 10 || editWeight > 500) {
+            showToast('请输入有效的体重(10-500kg)', 'warning');
+            $('#editWeight').focus();
+            return;
+        }
+        
+        if (!editSymptoms) {
+            showToast('请选择肩部症状', 'warning');
+            $('#editSymptoms').focus();
+            return;
+        }
+        
         const formData = {};
         $('#editPatientForm').serializeArray().forEach(function(item) {
             formData[item.name] = item.value;

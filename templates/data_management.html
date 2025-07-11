@@ -217,7 +217,13 @@
                                                 <label for="symptoms" class="form-label">
                                                     <i class="fas fa-exclamation-triangle me-2"></i>肩部症状
                                                 </label>
-                                                <textarea class="form-control" id="symptoms" name="symptoms" rows="3" placeholder="请输入肩部症状描述"></textarea>
+                                                <select class="form-select" id="symptoms" name="symptoms" required>
+                                                    <option value="">请选择肩部症状</option>
+                                                    <option value="疼痛">疼痛</option>
+                                                    <option value="活动受限">活动受限</option>
+                                                    <option value="脱臼">脱臼</option>
+                                                    <option value="其他">其他</option>
+                                                </select>
                                             </div>
                                             
                                             <div class="col-md-6">
@@ -231,7 +237,15 @@
                                                 <label for="treatment" class="form-label">
                                                     <i class="fas fa-pills me-2"></i>治疗史
                                                 </label>
-                                                <input type="text" class="form-control" id="treatment" name="treatment" placeholder="请输入治疗史">
+                                                <select class="form-select" id="treatment" name="treatment">
+                                                    <option value="">请选择治疗史</option>
+                                                    <option value="药物">药物</option>
+                                                    <option value="针灸">针灸</option>
+                                                    <option value="康复理疗">康复理疗</option>
+                                                    <option value="关节封闭针">关节封闭针</option>
+                                                    <option value="手术">手术</option>
+                                                    <option value="其他">其他</option>
+                                                </select>
                                             </div>
                                             
                                             <!-- 项目对接信息 -->
@@ -412,7 +426,13 @@
                         
                         <div class="col-12">
                             <label for="editSymptoms" class="form-label">肩部症状</label>
-                            <textarea class="form-control" id="editSymptoms" name="symptoms" rows="3"></textarea>
+                            <select class="form-select" id="editSymptoms" name="symptoms" required>
+                                <option value="">请选择肩部症状</option>
+                                <option value="疼痛">疼痛</option>
+                                <option value="活动受限">活动受限</option>
+                                <option value="脱臼">脱臼</option>
+                                <option value="其他">其他</option>
+                            </select>
                         </div>
                         <div class="col-md-6">
                             <label for="editDuration" class="form-label">持续时间(天)</label>
@@ -420,7 +440,15 @@
                         </div>
                         <div class="col-md-6">
                             <label for="editTreatment" class="form-label">治疗史</label>
-                            <input type="text" class="form-control" id="editTreatment" name="treatment">
+                            <select class="form-select" id="editTreatment" name="treatment">
+                                <option value="">请选择治疗史</option>
+                                <option value="药物">药物</option>
+                                <option value="针灸">针灸</option>
+                                <option value="康复理疗">康复理疗</option>
+                                <option value="关节封闭针">关节封闭针</option>
+                                <option value="手术">手术</option>
+                                <option value="其他">其他</option>
+                            </select>
                         </div>
                         
                         <!-- 项目对接信息 -->
