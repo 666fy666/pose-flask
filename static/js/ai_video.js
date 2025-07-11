@@ -979,8 +979,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (analysisResult.videoOutputPaths && Object.keys(analysisResult.videoOutputPaths).length > 0) {
             filesHtml += '<div class="file-group mb-3"><h5><i class="fas fa-video me-2"></i>标注视频</h5><div class="row">';
             Object.entries(analysisResult.videoOutputPaths).forEach(([name, path]) => {
-                const displayName = name.replace(/_annotated\.avi/, ' 角度标注视频');
-                const filename = `${displayName}.avi`;
+                // 从路径中提取文件名，格式为 患者姓名-角度.avi
+                const filename = path.split('/').pop() || name;
+                const displayName = filename.replace('.avi', '');
                 filesHtml += `
                     <div class="col-md-6 col-lg-4 mb-2">
                         <button onclick="downloadVideo('${path}', '${filename}')" class="btn btn-outline-success btn-sm w-100">

@@ -885,7 +885,8 @@ def get_patient_analysis_results(patient_id):
             # 获取标注视频
             video_files = []
             for file in os.listdir(analysis_dir):
-                if file.endswith('_annotated.avi'):
+                # 新的命名格式：患者姓名-角度.avi
+                if file.endswith('.avi') and '-' in file and not file.endswith('_annotated.avi'):
                     video_files.append({
                         'name': file,
                         'url': f"/api/patients/{patient_id}/analysis_results/{file}"

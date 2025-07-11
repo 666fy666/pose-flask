@@ -271,7 +271,8 @@ class VideoAnalyzer:
         video_output_paths = {}
         for angle, result in analysis_results.items():
             if result and result.get('annotated_frames'):
-                output_path = os.path.join(analysis_dir, f"{angle}_annotated.avi")
+                # 使用患者姓名-角度的格式命名标注视频
+                output_path = os.path.join(analysis_dir, f"{patient_name}-{angle}.avi")
                 self.save_annotated_video(result['annotated_frames'], output_path, result['fps'])
                 video_output_paths[angle] = output_path
         
