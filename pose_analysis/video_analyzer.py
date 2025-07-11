@@ -34,7 +34,7 @@ class VideoAnalyzer:
         self.report_generator = ReportGenerator()
         
     def analyze_video(self, video_path: str, angle: str, conf: float = 0.25, 
-                     iou: float = 0.45) -> Dict[str, Any]:
+                     iou: float = 0.45, timeline_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         分析单个视频文件
         
@@ -43,6 +43,7 @@ class VideoAnalyzer:
             angle: 视频角度 (front/side/back)
             conf: 置信度阈值
             iou: IoU阈值
+            timeline_data: 时间轴数据，包含start和end时间点
             
         Returns:
             Dict[str, Any]: 分析结果
@@ -63,13 +64,34 @@ class VideoAnalyzer:
         
         frame_count = 0
         fps = cap.get(cv2.CAP_PROP_FPS)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        duration = total_frames / fps if fps > 0 else 0
+        
+        # 处理时间轴数据
+        start_time = 0
+        end_time = duration
+        print(f"时间轴数据: {timeline_data}")
+        if timeline_data:
+            # timeline_data 直接就是该角度的时间轴数据
+            start_time = timeline_data.get('start', 0)
+            end_time = timeline_data.get('end', duration)
+            print(f"时间轴设置: {angle}角度视频分析时间范围 {start_time:.2f}s - {end_time:.2f}s")
+        
+        # 计算开始和结束帧
+        start_frame = int(start_time * fps)
+        end_frame = int(end_time * fps)
         
         print(f"开始分析视频: {video_path}")
-        print(f"视频FPS: {fps}")
+        print(f"视频FPS: {fps}, 总时长: {duration:.2f}s")
+        print(f"分析帧范围: {start_frame} - {end_frame}")
+        
+        # 跳过开始帧之前的帧
+        for _ in range(start_frame):
+            cap.read()
         
         while True:
             ret, frame = cap.read()
-            if not ret:
+            if not ret or frame_count >= (end_frame - start_frame):
                 break
             
             frame_count += 1
@@ -111,7 +133,7 @@ class VideoAnalyzer:
                         'right_wrist_height': right_wrist_height
                     })
                 
-                # 保存所有标注后的帧，确保视频时长与原视频一致
+                # 只保存选择时间段内的标注帧
                 annotated_frames.append(annotated_frame.copy())
                 
             except Exception as e:
@@ -131,6 +153,9 @@ class VideoAnalyzer:
             'frame_count': frame_count,
             'fps': fps,
             'duration': frame_count / fps if fps > 0 else 0,
+            'total_duration': duration,  # 原始视频总时长
+            'analysis_start_time': start_time,  # 分析开始时间
+            'analysis_end_time': end_time,  # 分析结束时间
             'angle_data': angle_data,
             'velocity_data': velocity_data,
             'acceleration_data': acceleration_data,
@@ -140,14 +165,15 @@ class VideoAnalyzer:
         }
         
         print(f"视频分析完成: {video_path}")
-        print(f"总帧数: {frame_count}")
+        print(f"分析帧数: {frame_count}, 分析时长: {frame_count/fps:.2f}s")
         
         return analysis_result
     
     def analyze_patient_videos(self, patient_id: int, patient_name: str, 
                              video_paths: Dict[str, str], conf: float = 0.25, 
                              iou: float = 0.45, stop_check_func=None,
-                             patient_info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                             patient_info: Optional[Dict[str, Any]] = None,
+                             timeline_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         分析患者的所有视频文件
         
@@ -159,6 +185,7 @@ class VideoAnalyzer:
             iou: IoU阈值
             stop_check_func: 停止检查函数，返回True表示需要停止
             patient_info: 患者详细信息（年龄、性别、身高、体重等）
+            timeline_data: 时间轴数据字典，格式为 {'front': {'start': 0, 'end': 10}, ...}
             
         Returns:
             Dict[str, Any]: 综合分析结果
@@ -185,7 +212,13 @@ class VideoAnalyzer:
                     break
                     
                 try:
-                    result = self.analyze_video(video_path, angle, conf, iou)
+                    # 获取该角度的时间轴数据
+                    angle_timeline = None
+                    if timeline_data and angle in timeline_data:
+                        angle_timeline = timeline_data[angle]
+                        print(f"为{angle}角度设置时间轴数据: {angle_timeline}")
+                    
+                    result = self.analyze_video(video_path, angle, conf, iou, angle_timeline)
                     analysis_results[angle] = result
                 except Exception as e:
                     print(f"分析{angle}角度视频失败: {str(e)}")

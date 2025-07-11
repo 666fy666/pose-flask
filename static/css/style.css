@@ -1596,3 +1596,197 @@ footer {
         max-height: 150px;
     }
 } 
+
+/* 时间轴控件样式 */
+.timeline-control {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.timeline-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.timeline-duration {
+    font-size: 0.8rem;
+    color: #6c757d;
+    background: #e9ecef;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.timeline-slider-container {
+    margin-bottom: 10px;
+}
+
+.timeline-slider {
+    position: relative;
+    height: 30px;
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+.timeline-track {
+    position: relative;
+    height: 100%;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.timeline-range {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #007aff, #0056b3);
+    border-radius: 15px;
+    transition: all 0.2s ease;
+}
+
+.timeline-handle {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: #ffffff;
+    border: 2px solid #007aff;
+    border-radius: 50%;
+    cursor: grab;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.timeline-handle:hover {
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+}
+
+.timeline-handle:active {
+    cursor: grabbing;
+    transform: translateY(-50%) scale(1.05);
+}
+
+.timeline-handle-start {
+    left: 0;
+}
+
+.timeline-handle-end {
+    right: 0;
+}
+
+.timeline-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.timeline-start, .timeline-end {
+    background: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.timeline-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.timeline-actions .btn {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+/* 时间轴禁用状态 */
+.timeline-control.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.timeline-control.disabled .timeline-handle {
+    cursor: not-allowed;
+}
+
+/* 时间轴预览状态 */
+.timeline-control.previewing .timeline-range {
+    background: linear-gradient(90deg, #28a745, #1e7e34);
+}
+
+.timeline-control.previewing .timeline-handle {
+    border-color: #28a745;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .timeline-control {
+        padding: 12px;
+        margin-top: 12px;
+    }
+    
+    .timeline-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .timeline-slider {
+        height: 25px;
+    }
+    
+    .timeline-handle {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .timeline-actions {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .timeline-actions .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .timeline-control {
+        padding: 10px;
+        margin-top: 10px;
+    }
+    
+    .timeline-slider {
+        height: 22px;
+    }
+    
+    .timeline-handle {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .timeline-label {
+        font-size: 0.85rem;
+    }
+    
+    .timeline-duration {
+        font-size: 0.75rem;
+    }
+} 

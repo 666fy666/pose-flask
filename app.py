@@ -524,7 +524,7 @@ def upload_video():
     except Exception as e:
         return jsonify({'success': False, 'message': f'保存文件失败: {str(e)}'}), 500
 
-def run_analysis_task(analysis_id, patient_id, patient_name, video_paths, confidence_threshold):
+def run_analysis_task(analysis_id, patient_id, patient_name, video_paths, confidence_threshold, timeline_data=None):
     """在后台线程中运行分析任务"""
     try:
         # 初始化分析状态
@@ -584,7 +584,8 @@ def run_analysis_task(analysis_id, patient_id, patient_name, video_paths, confid
             conf=confidence_threshold,
             iou=0.45,
             stop_check_func=check_stop,
-            patient_info=patient_info if patient_info else None
+            patient_info=patient_info if patient_info else None,
+            timeline_data=timeline_data if timeline_data else None
         )
         
         # 检查是否被停止
@@ -690,6 +691,8 @@ def analyze_video():
     analysis_type = data.get('analysisType', 'comprehensive')
     confidence_threshold = data.get('confidenceThreshold', 50) / 100.0  # 转换为0-1范围
     patient_id = data.get('patientId')
+    timeline_data = data.get('timelineData', {})  # 获取时间轴数据
+    print(f"接收到的时间轴数据: {timeline_data}")
     
     if not videos:
         return jsonify({'success': False, 'message': '没有提供视频文件'}), 400
@@ -725,7 +728,7 @@ def analyze_video():
         # 启动后台分析任务
         analysis_thread = threading.Thread(
             target=run_analysis_task,
-            args=(analysis_id, patient.id, patient.username, video_paths, confidence_threshold)
+            args=(analysis_id, patient.id, patient.username, video_paths, confidence_threshold, timeline_data)
         )
         analysis_thread.daemon = True
         analysis_thread.start()

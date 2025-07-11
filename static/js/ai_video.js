@@ -12,6 +12,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // 患者选择相关变量
     let selectedPatient = null;
     let patientsList = [];
+    
+    // 时间轴相关变量
+    let timelineData = {
+        front: { start: 0, end: 0, duration: 0, isDragging: false, dragHandle: null },
+        side: { start: 0, end: 0, duration: 0, isDragging: false, dragHandle: null },
+        back: { start: 0, end: 0, duration: 0, isDragging: false, dragHandle: null }
+    };
 
     // 初始化页面
     initializePage();
@@ -86,7 +93,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (refreshVideoPreviewsBtn) {
             refreshVideoPreviewsBtn.addEventListener('click', function() {
                 refreshVideoPreviews();
-                showAlert('视频预览已刷新', 'success');
+                // 手动初始化所有时间轴
+                const angles = ['front', 'side', 'back'];
+                angles.forEach(angle => {
+                    const video = document.getElementById(`${angle}VideoPreview`);
+                    if (video && video.src) {
+                        console.log(`手动初始化${angle}角度时间轴`);
+                        initializeTimeline(angle);
+                    }
+                });
+                showAlert('视频预览已刷新，时间轴已重新初始化', 'success');
             });
         }
         
@@ -363,6 +379,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 videoElement.load();
                 // 确保视频预览区域可见
                 showVideoPreviewSection();
+                
+                // 监听视频加载事件
+                const handleVideoLoad = () => {
+                    console.log(`${angle}角度视频加载完成，初始化时间轴`);
+                    initializeTimeline(angle);
+                    videoElement.removeEventListener('loadedmetadata', handleVideoLoad);
+                    videoElement.removeEventListener('canplay', handleVideoLoad);
+                };
+                
+                // 添加多个事件监听器确保捕获到加载完成
+                videoElement.addEventListener('loadedmetadata', handleVideoLoad);
+                videoElement.addEventListener('canplay', handleVideoLoad);
+                
+                // 备用方案：延迟初始化
+                setTimeout(() => {
+                    if (videoElement.readyState >= 1) {
+                        console.log(`${angle}角度视频已加载，延迟初始化时间轴`);
+                        initializeTimeline(angle);
+                    }
+                }, 1000);
             } else {
                 // 清除视频预览
                 videoElement.src = '';
@@ -504,11 +540,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const analysisType = document.getElementById('analysisType').value;
         const confidenceThreshold = document.getElementById('confidenceThreshold').value;
         
+        // 获取时间轴数据
+        const timelineData = getTimelineDataForAnalysis();
+        console.log('发送的时间轴数据:', timelineData);
+        
         const analysisData = {
             videos: uploadedVideos,
             analysisType: analysisType,
             confidenceThreshold: parseInt(confidenceThreshold),
-            patientId: selectedPatient.id
+            patientId: selectedPatient.id,
+            timelineData: timelineData  // 添加时间轴数据
         };
         
         fetch('/api/analyze_video', {
@@ -1949,6 +1990,321 @@ document.addEventListener('DOMContentLoaded', function() {
             showAlert('患者不存在', 'error');
         }
     }
-});
 
- 
+    // ==================== 时间轴相关函数 ====================
+    
+    // 初始化时间轴
+    function initializeTimeline(angle) {
+        const video = document.getElementById(`${angle}VideoPreview`);
+        const timelineControl = document.getElementById(`${angle}TimelineControl`);
+        
+        console.log(`初始化${angle}角度时间轴`);
+        console.log('视频元素:', video);
+        console.log('时间轴控件:', timelineControl);
+        console.log('视频readyState:', video ? video.readyState : 'N/A');
+        console.log('视频duration:', video ? video.duration : 'N/A');
+        
+        if (!video || !timelineControl) {
+            console.log(`${angle}角度时间轴初始化失败：缺少视频元素或时间轴控件`);
+            return;
+        }
+        
+        // 等待视频元数据加载完成
+        if (video.readyState >= 1 && video.duration > 0) {
+            console.log(`${angle}角度视频已加载，直接设置时间轴`);
+            setupTimeline(angle, video);
+        } else {
+            console.log(`${angle}角度视频未加载，等待元数据`);
+            video.addEventListener('loadedmetadata', () => {
+                console.log(`${angle}角度视频元数据已加载，设置时间轴`);
+                setupTimeline(angle, video);
+            });
+        }
+    }
+    
+    // 设置时间轴
+    function setupTimeline(angle, video) {
+        const duration = video.duration;
+        const data = timelineData[angle];
+        
+        console.log(`设置${angle}角度时间轴，视频时长: ${duration}`);
+        
+        if (duration <= 0) {
+            console.log(`${angle}角度视频时长无效，跳过时间轴设置`);
+            return;
+        }
+        
+        // 初始化时间轴数据
+        data.duration = duration;
+        data.start = 0;
+        data.end = duration;
+        
+        console.log(`${angle}角度时间轴数据已设置:`, data);
+        
+        // 更新UI
+        updateTimelineUI(angle);
+        
+        // 绑定拖拽事件
+        bindTimelineEvents(angle);
+        
+        // 显示时间轴控件
+        const timelineControl = document.getElementById(`${angle}TimelineControl`);
+        if (timelineControl) {
+            timelineControl.style.display = 'block';
+            console.log(`${angle}角度时间轴控件已显示`);
+        } else {
+            console.log(`${angle}角度时间轴控件未找到`);
+        }
+    }
+    
+    // 更新时间轴UI
+    function updateTimelineUI(angle) {
+        const data = timelineData[angle];
+        const duration = data.duration;
+        const start = data.start;
+        const end = data.end;
+        
+        // 更新时长显示
+        const durationElement = document.getElementById(`${angle}Duration`);
+        if (durationElement) {
+            durationElement.textContent = formatTime(duration);
+        }
+        
+        // 更新开始和结束时间显示
+        const startElement = document.getElementById(`${angle}StartTime`);
+        const endElement = document.getElementById(`${angle}EndTime`);
+        if (startElement) startElement.textContent = formatTime(start);
+        if (endElement) endElement.textContent = formatTime(end);
+        
+        // 更新滑块位置
+        updateTimelineHandles(angle);
+    }
+    
+    // 更新时间轴滑块位置
+    function updateTimelineHandles(angle) {
+        const data = timelineData[angle];
+        const duration = data.duration;
+        const start = data.start;
+        const end = data.end;
+        
+        if (duration <= 0) return;
+        
+        const startPercent = (start / duration) * 100;
+        const endPercent = (end / duration) * 100;
+        
+        // 更新开始滑块位置
+        const startHandle = document.getElementById(`${angle}HandleStart`);
+        if (startHandle) {
+            startHandle.style.left = `${startPercent}%`;
+        }
+        
+        // 更新结束滑块位置
+        const endHandle = document.getElementById(`${angle}HandleEnd`);
+        if (endHandle) {
+            endHandle.style.right = `${100 - endPercent}%`;
+        }
+        
+        // 更新选择范围
+        const range = document.getElementById(`${angle}TimelineRange`);
+        if (range) {
+            range.style.left = `${startPercent}%`;
+            range.style.width = `${endPercent - startPercent}%`;
+        }
+    }
+    
+    // 绑定时间轴事件
+    function bindTimelineEvents(angle) {
+        const startHandle = document.getElementById(`${angle}HandleStart`);
+        const endHandle = document.getElementById(`${angle}HandleEnd`);
+        const slider = document.getElementById(`${angle}TimelineSlider`);
+        
+        if (!startHandle || !endHandle || !slider) return;
+        
+        // 开始滑块拖拽事件
+        startHandle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            timelineData[angle].isDragging = true;
+            timelineData[angle].dragHandle = 'start';
+            document.addEventListener('mousemove', handleTimelineDrag);
+            document.addEventListener('mouseup', handleTimelineDragEnd);
+        });
+        
+        // 结束滑块拖拽事件
+        endHandle.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            timelineData[angle].isDragging = true;
+            timelineData[angle].dragHandle = 'end';
+            document.addEventListener('mousemove', handleTimelineDrag);
+            document.addEventListener('mouseup', handleTimelineDragEnd);
+        });
+        
+        // 点击滑块轨道事件
+        slider.addEventListener('click', (e) => {
+            if (timelineData[angle].isDragging) return;
+            
+            const rect = slider.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percent = (clickX / rect.width) * 100;
+            const time = (percent / 100) * timelineData[angle].duration;
+            
+            // 判断点击位置更接近哪个滑块
+            const startPercent = (timelineData[angle].start / timelineData[angle].duration) * 100;
+            const endPercent = (timelineData[angle].end / timelineData[angle].duration) * 100;
+            
+            if (Math.abs(percent - startPercent) < Math.abs(percent - endPercent)) {
+                // 更接近开始滑块
+                timelineData[angle].start = Math.max(0, Math.min(time, timelineData[angle].end - 1));
+            } else {
+                // 更接近结束滑块
+                timelineData[angle].end = Math.max(timelineData[angle].start + 1, Math.min(time, timelineData[angle].duration));
+            }
+            
+            updateTimelineUI(angle);
+        });
+    }
+    
+    // 处理时间轴拖拽
+    function handleTimelineDrag(e) {
+        const angles = ['front', 'side', 'back'];
+        
+        for (const angle of angles) {
+            const data = timelineData[angle];
+            if (!data.isDragging) continue;
+            
+            const slider = document.getElementById(`${angle}TimelineSlider`);
+            if (!slider) continue;
+            
+            const rect = slider.getBoundingClientRect();
+            const dragX = e.clientX - rect.left;
+            const percent = Math.max(0, Math.min(100, (dragX / rect.width) * 100));
+            const time = (percent / 100) * data.duration;
+            
+            if (data.dragHandle === 'start') {
+                data.start = Math.max(0, Math.min(time, data.end - 1));
+            } else if (data.dragHandle === 'end') {
+                data.end = Math.max(data.start + 1, Math.min(time, data.duration));
+            }
+            
+            updateTimelineUI(angle);
+        }
+    }
+    
+    // 处理时间轴拖拽结束
+    function handleTimelineDragEnd() {
+        const angles = ['front', 'side', 'back'];
+        
+        for (const angle of angles) {
+            timelineData[angle].isDragging = false;
+            timelineData[angle].dragHandle = null;
+        }
+        
+        document.removeEventListener('mousemove', handleTimelineDrag);
+        document.removeEventListener('mouseup', handleTimelineDragEnd);
+    }
+    
+    // 格式化时间显示
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    // 重置时间轴
+    window.resetTimeline = function(angle) {
+        const data = timelineData[angle];
+        data.start = 0;
+        data.end = data.duration;
+        updateTimelineUI(angle);
+        showAlert(`${getAngleName(angle)}视频时间轴已重置`, 'success');
+    };
+    
+    // 预览时间轴选择的时间段
+    window.previewTimeline = function(angle) {
+        const data = timelineData[angle];
+        const video = document.getElementById(`${angle}VideoPreview`);
+        
+        if (!video) return;
+        
+        // 设置视频播放位置到开始时间
+        video.currentTime = data.start;
+        
+        // 播放视频
+        video.play().then(() => {
+            // 监听时间更新，在结束时间停止
+            const timeUpdateHandler = () => {
+                if (video.currentTime >= data.end) {
+                    video.pause();
+                    video.removeEventListener('timeupdate', timeUpdateHandler);
+                }
+            };
+            video.addEventListener('timeupdate', timeUpdateHandler);
+            
+            // 添加预览状态样式
+            const timelineControl = document.getElementById(`${angle}TimelineControl`);
+            if (timelineControl) {
+                timelineControl.classList.add('previewing');
+                setTimeout(() => {
+                    timelineControl.classList.remove('previewing');
+                }, 2000);
+            }
+            
+            showAlert(`正在预览${getAngleName(angle)}视频选择的时间段`, 'info');
+        }).catch(error => {
+            console.error('视频播放失败:', error);
+            showAlert('视频播放失败', 'error');
+        });
+    };
+    
+    // 获取角度名称
+    function getAngleName(angle) {
+        const names = {
+            front: '正面',
+            side: '侧面',
+            back: '背面'
+        };
+        return names[angle] || angle;
+    }
+    
+    // 全局函数：手动初始化时间轴（用于调试）
+    window.initTimeline = function(angle) {
+        console.log(`手动初始化${angle}角度时间轴`);
+        initializeTimeline(angle);
+    };
+    
+    // 全局函数：初始化所有时间轴（用于调试）
+    window.initAllTimelines = function() {
+        const angles = ['front', 'side', 'back'];
+        angles.forEach(angle => {
+            const video = document.getElementById(`${angle}VideoPreview`);
+            if (video && video.src) {
+                console.log(`手动初始化${angle}角度时间轴`);
+                initializeTimeline(angle);
+            }
+        });
+    };
+    
+    // 获取时间轴数据用于分析
+    function getTimelineDataForAnalysis() {
+        const result = {};
+        const angles = ['front', 'side', 'back'];
+        
+        console.log('当前时间轴数据:', timelineData);
+        
+        for (const angle of angles) {
+            const data = timelineData[angle];
+            console.log(`${angle}角度时间轴数据:`, data);
+            if (data && data.duration > 0) {
+                result[angle] = {
+                    start: data.start,
+                    end: data.end,
+                    duration: data.duration
+                };
+                console.log(`添加${angle}角度时间轴:`, result[angle]);
+            }
+        }
+        
+        console.log('最终时间轴数据:', result);
+        return result;
+    }
+    
+});

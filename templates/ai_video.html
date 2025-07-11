@@ -247,11 +247,13 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0">
-                                <i class="fas fa-eye me-2"></i>视频预览
+                                <i class="fas fa-eye me-2"></i>视频预览与时间轴调整
                             </h5>
+                            <p class="text-muted mb-0">调整视频开始和结束时间，选择需要分析的时间段</p>
                         </div>
                         <div class="card-body">
                             <div class="row g-3">
+                                <!-- 正面视频 -->
                                 <div class="col-md-4">
                                     <div class="video-preview-card">
                                         <h6 class="video-preview-title">
@@ -260,8 +262,38 @@
                                         <video id="frontVideoPreview" class="video-preview-small" controls>
                                             您的浏览器不支持视频播放。
                                         </video>
+                                        <!-- 时间轴控件 -->
+                                        <div class="timeline-control" id="frontTimelineControl" style="display: none;">
+                                            <div class="timeline-header">
+                                                <span class="timeline-label">时间轴调整</span>
+                                                <span class="timeline-duration" id="frontDuration">00:00</span>
+                                            </div>
+                                            <div class="timeline-slider-container">
+                                                <div class="timeline-slider" id="frontTimelineSlider">
+                                                    <div class="timeline-track">
+                                                        <div class="timeline-range" id="frontTimelineRange"></div>
+                                                        <div class="timeline-handle timeline-handle-start" id="frontHandleStart"></div>
+                                                        <div class="timeline-handle timeline-handle-end" id="frontHandleEnd"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="timeline-info">
+                                                <span class="timeline-start" id="frontStartTime">00:00</span>
+                                                <span class="timeline-end" id="frontEndTime">00:00</span>
+                                            </div>
+                                            <div class="timeline-actions">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="resetTimeline('front')">
+                                                    <i class="fas fa-undo me-1"></i>重置
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="previewTimeline('front')">
+                                                    <i class="fas fa-play me-1"></i>预览
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+
+                                <!-- 侧面视频 -->
                                 <div class="col-md-4">
                                     <div class="video-preview-card">
                                         <h6 class="video-preview-title">
@@ -270,8 +302,38 @@
                                         <video id="sideVideoPreview" class="video-preview-small" controls>
                                             您的浏览器不支持视频播放。
                                         </video>
+                                        <!-- 时间轴控件 -->
+                                        <div class="timeline-control" id="sideTimelineControl" style="display: none;">
+                                            <div class="timeline-header">
+                                                <span class="timeline-label">时间轴调整</span>
+                                                <span class="timeline-duration" id="sideDuration">00:00</span>
+                                            </div>
+                                            <div class="timeline-slider-container">
+                                                <div class="timeline-slider" id="sideTimelineSlider">
+                                                    <div class="timeline-track">
+                                                        <div class="timeline-range" id="sideTimelineRange"></div>
+                                                        <div class="timeline-handle timeline-handle-start" id="sideHandleStart"></div>
+                                                        <div class="timeline-handle timeline-handle-end" id="sideHandleEnd"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="timeline-info">
+                                                <span class="timeline-start" id="sideStartTime">00:00</span>
+                                                <span class="timeline-end" id="sideEndTime">00:00</span>
+                                            </div>
+                                            <div class="timeline-actions">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="resetTimeline('side')">
+                                                    <i class="fas fa-undo me-1"></i>重置
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="previewTimeline('side')">
+                                                    <i class="fas fa-play me-1"></i>预览
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+
+                                <!-- 背面视频 -->
                                 <div class="col-md-4">
                                     <div class="video-preview-card">
                                         <h6 class="video-preview-title">
@@ -280,8 +342,48 @@
                                         <video id="backVideoPreview" class="video-preview-small" controls>
                                             您的浏览器不支持视频播放。
                                         </video>
+                                        <!-- 时间轴控件 -->
+                                        <div class="timeline-control" id="backTimelineControl" style="display: none;">
+                                            <div class="timeline-header">
+                                                <span class="timeline-label">时间轴调整</span>
+                                                <span class="timeline-duration" id="backDuration">00:00</span>
+                                            </div>
+                                            <div class="timeline-slider-container">
+                                                <div class="timeline-slider" id="backTimelineSlider">
+                                                    <div class="timeline-track">
+                                                        <div class="timeline-range" id="backTimelineRange"></div>
+                                                        <div class="timeline-handle timeline-handle-start" id="backHandleStart"></div>
+                                                        <div class="timeline-handle timeline-handle-end" id="backHandleEnd"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="timeline-info">
+                                                <span class="timeline-start" id="backStartTime">00:00</span>
+                                                <span class="timeline-end" id="backEndTime">00:00</span>
+                                            </div>
+                                            <div class="timeline-actions">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="resetTimeline('back')">
+                                                    <i class="fas fa-undo me-1"></i>重置
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="previewTimeline('back')">
+                                                    <i class="fas fa-play me-1"></i>预览
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <!-- 时间轴说明 -->
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>时间轴调整说明：</strong>
+                                <ul class="mb-0 mt-2">
+                                    <li>拖动滑块调整视频的开始和结束时间</li>
+                                    <li>选择合适的时间段进行AI分析，避免无效动作</li>
+                                    <li>点击"预览"按钮可以查看选择的时间段</li>
+                                    <li>点击"重置"按钮恢复完整视频时长</li>
+                                </ul>
                             </div>
                             
                             <!-- 开始分析按钮 -->
@@ -292,7 +394,7 @@
                                 <button class="btn btn-outline-secondary btn-lg ms-2" id="refreshVideoPreviewsBtn">
                                     <i class="fas fa-sync-alt me-2"></i>刷新预览
                                 </button>
-                                <p class="text-muted mt-2" id="analysisStatusText">请确保所有视频都已上传完成</p>
+                                <p class="text-muted mt-2" id="analysisStatusText">请确保所有视频都已上传完成并调整好时间轴</p>
                             </div>
                         </div>
                     </div>
