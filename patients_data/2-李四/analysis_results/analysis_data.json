@@ -2,14 +2,14 @@
   "patient_info": {
     "id": 2,
     "name": "李四",
-    "analysis_time": "2025-07-11 09:14:55",
+    "analysis_time": "2025-07-11 16:25:28",
     "age": 50,
     "gender": "女",
     "height": 159.0,
     "weight": 58.0,
-    "symptoms": "很痛ing",
+    "symptoms": "其他",
     "duration": 4,
-    "treatment": "无",
+    "treatment": "手术",
     "project": "ai",
     "fill_person": "fy",
     "address": "上海"
@@ -17,28 +17,28 @@
   "left_shoulder_data": {
     "max_angle": 153.83,
     "min_angle": 15.33,
-    "avg_angle": 110.1,
+    "avg_angle": 109.63,
     "angle_range": 138.5,
     "velocity_stages": [
       2.7,
       1.53,
       1.34,
-      3.0
+      3.1
     ],
     "max_velocity": 137.79,
     "acceleration_stages": [
       1.68,
       1.06,
       1.65,
-      5.83
+      6.05
     ],
     "max_acceleration": 143.53
   },
   "right_shoulder_data": {
-    "max_angle": 100.63,
+    "max_angle": 100.35,
     "min_angle": 0.5,
-    "avg_angle": 72.4,
-    "angle_range": 100.13,
+    "avg_angle": 72.01,
+    "angle_range": 99.84,
     "velocity_stages": [
       1.69,
       1.22,
@@ -57,11 +57,11 @@
   "wrist_data": {
     "left_max_height": 2.7,
     "right_max_height": 2.7,
-    "left_avg_height": 0.45,
+    "left_avg_height": 0.46,
     "right_avg_height": 0.29
   },
   "summary": {
-    "function_score": 70.2,
+    "function_score": 70.1,
     "function_assessment": "肩关节运动功能基本正常，存在轻微活动受限，建议进一步观察。",
     "recommendations": [
       "进行肩关节柔韧性训练",

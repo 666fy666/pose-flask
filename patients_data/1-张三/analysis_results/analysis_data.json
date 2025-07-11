@@ -2,7 +2,7 @@
   "patient_info": {
     "id": 1,
     "name": "张三",
-    "analysis_time": "2025-07-11 16:05:05",
+    "analysis_time": "2025-07-11 16:26:46",
     "age": 66,
     "gender": "男",
     "height": 175.0,
@@ -15,53 +15,53 @@
     "address": "上海市"
   },
   "left_shoulder_data": {
-    "max_angle": 141.87,
-    "min_angle": 63.34,
-    "avg_angle": 108.36,
-    "angle_range": 78.53,
+    "max_angle": 143.21,
+    "min_angle": 8.77,
+    "avg_angle": 102.56,
+    "angle_range": 134.44,
     "velocity_stages": [
-      0.0,
-      3.0,
+      3.25,
+      3.03,
       3.61,
-      2.69
+      1.23
     ],
     "max_velocity": 10.4,
     "acceleration_stages": [
-      0.0,
-      3.18,
+      2.02,
+      2.89,
       4.93,
-      3.09
+      1.71
     ],
     "max_acceleration": 11.53
   },
   "right_shoulder_data": {
-    "max_angle": 82.86,
-    "min_angle": 61.54,
-    "avg_angle": 74.91,
-    "angle_range": 21.32,
+    "max_angle": 83.81,
+    "min_angle": 4.23,
+    "avg_angle": 67.37,
+    "angle_range": 79.58,
     "velocity_stages": [
-      0.0,
-      1.87,
+      3.47,
+      1.48,
       0.0,
       0.0
     ],
-    "max_velocity": 6.71,
+    "max_velocity": 7.25,
     "acceleration_stages": [
-      0.0,
-      2.97,
+      2.3,
+      2.04,
       0.0,
       0.0
     ],
     "max_acceleration": 11.34
   },
   "wrist_data": {
-    "left_max_height": 0.62,
+    "left_max_height": 0.72,
     "right_max_height": 0.46,
-    "left_avg_height": 0.56,
-    "right_avg_height": 0.41
+    "left_avg_height": 0.52,
+    "right_avg_height": 0.36
   },
   "summary": {
-    "function_score": 73.8,
+    "function_score": 75.5,
     "function_assessment": "肩关节运动功能基本正常，存在轻微活动受限，建议进一步观察。",
     "recommendations": [
       "进行肩关节柔韧性训练",

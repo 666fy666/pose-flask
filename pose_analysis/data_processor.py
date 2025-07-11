@@ -151,7 +151,9 @@ class DataProcessor:
                         ax2.grid(True, alpha=0.3)
                     
                     plt.tight_layout()
-                    charts[f'{angle}_angle_analysis'] = fig
+                    # 使用中文文件名
+                    angle_name = '正面' if angle == 'front' else '侧面'
+                    charts[f'{angle_name}_角度分析'] = fig
                     
                     # 生成角度-加速度分布图
                     if result.get('acceleration_data'):
@@ -177,7 +179,9 @@ class DataProcessor:
                         ax2.grid(True, alpha=0.3)
                         
                         plt.tight_layout()
-                        charts[f'{angle}_acceleration_analysis'] = fig
+                        # 使用中文文件名
+                        angle_name = '正面' if angle == 'front' else '侧面'
+                        charts[f'{angle_name}_加速度分析'] = fig
         
         # 处理后视数据（手腕高度）
         if 'back' in analysis_results and analysis_results['back']:
@@ -202,7 +206,7 @@ class DataProcessor:
                 ax.grid(True, alpha=0.3)
                 
                 plt.tight_layout()
-                charts['back_wrist_height'] = fig
+                charts['背面_手腕高度'] = fig
         
         return charts
     

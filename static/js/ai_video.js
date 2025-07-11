@@ -855,6 +855,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 显示图表和视频链接
         displayAnalysisFiles(analysisResult);
+        
+        // 强制刷新所有图表，避免缓存问题
+        setTimeout(() => {
+            refreshAllCharts();
+        }, 1000);
     }
 
     function displayAngleResult(angle, result) {
@@ -918,15 +923,28 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 显示图表文件 - 改为直接显示图片
         if (analysisResult.chartPaths && Object.keys(analysisResult.chartPaths).length > 0) {
-            filesHtml += '<div class="file-group mb-4"><h5><i class="fas fa-chart-line me-2"></i>分析图表</h5><div class="row">';
+            filesHtml += `
+                <div class="file-group mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5><i class="fas fa-chart-line me-2"></i>分析图表</h5>
+                        <button onclick="refreshAllCharts()" class="btn btn-outline-warning btn-sm" title="刷新所有图表">
+                            <i class="fas fa-sync-alt me-1"></i>刷新所有图表
+                        </button>
+                    </div>
+                    <div class="row">
+            `;
             Object.entries(analysisResult.chartPaths).forEach(([name, path]) => {
-                const displayName = name.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim();
+                // 直接使用中文文件名，不需要转换
+                const displayName = name;
                 filesHtml += `
                     <div class="col-md-6 col-lg-4 mb-3">
                         <div class="chart-card">
                             <div class="chart-header">
                                 <h6 class="chart-title">${displayName}</h6>
                                 <div class="chart-actions">
+                                    <button onclick="refreshChart('${path}', this)" class="btn btn-sm btn-outline-warning" title="刷新图表">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
                                     <a href="${path}" target="_blank" class="btn btn-sm btn-outline-primary" title="在新窗口打开">
                                         <i class="fas fa-external-link-alt"></i>
                                     </a>
@@ -1039,6 +1057,74 @@ document.addEventListener('DOMContentLoaded', function() {
                 resolve(allExist);
             });
         });
+    }
+
+    // 刷新图表函数
+    window.refreshChart = function(chartPath, buttonElement) {
+        const chartContainer = buttonElement.closest('.chart-card').querySelector('.chart-container');
+        const img = chartContainer.querySelector('.analysis-chart-img');
+        
+        if (img) {
+            // 添加时间戳避免缓存
+            const timestamp = new Date().getTime();
+            const newPath = chartPath + '?t=' + timestamp;
+            
+            // 重置加载状态
+            chartContainer.classList.remove('loaded', 'error');
+            img.style.display = 'block';
+            
+            // 显示加载动画
+            const loadingSpinner = chartContainer.querySelector('.chart-loading-spinner');
+            if (loadingSpinner) {
+                loadingSpinner.style.display = 'flex';
+            }
+            
+            // 隐藏错误信息
+            const errorDiv = chartContainer.querySelector('.chart-loading');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+            
+            // 重新加载图片
+            img.onload = function() {
+                chartContainer.classList.add('loaded');
+                const loadingSpinner = chartContainer.querySelector('.chart-loading-spinner');
+                if (loadingSpinner) {
+                    loadingSpinner.style.display = 'none';
+                }
+            };
+            
+            img.onerror = function() {
+                chartContainer.classList.add('error');
+                img.style.display = 'none';
+                const errorDiv = chartContainer.querySelector('.chart-loading');
+                if (errorDiv) {
+                    errorDiv.style.display = 'block';
+                }
+                const loadingSpinner = chartContainer.querySelector('.chart-loading-spinner');
+                if (loadingSpinner) {
+                    loadingSpinner.style.display = 'none';
+                }
+            };
+            
+            img.src = newPath;
+            showAlert('图表正在刷新...', 'info');
+        }
+    };
+    
+    // 刷新所有图表函数
+    window.refreshAllCharts = function() {
+        const chartImages = document.querySelectorAll('.analysis-chart-img');
+        chartImages.forEach(img => {
+            if (img.src) {
+                // 添加时间戳避免缓存
+                const timestamp = new Date().getTime();
+                const separator = img.src.includes('?') ? '&' : '?';
+                img.src = img.src + separator + 't=' + timestamp;
+            }
+        });
+        console.log('所有图表已刷新');
+        showAlert('所有图表已刷新', 'success');
     }
 
     function exportResults() {
