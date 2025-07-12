@@ -154,22 +154,20 @@ class ReportGenerator:
         hdr_cells[9].text = str(report_data['base_info']['weight'])
 
         # 添加段落
-        doc.add_heading('二、外展运动信息', level=2)
+        doc.add_heading('二、前视外展运动信息', level=2)
         
         # 小标题
-        doc.add_heading('1.左肩部角速度', level=3)
-        # 添加表格，2行5列
+        doc.add_heading('1.平均角速度', level=3)
+        # 添加表格，3行5列
         # 列名分别为：项目、0~45°、45~90°、90~135°、135~180°
         # 肩部角度数据list,用于填充表格
-        try:
-            temp_list = [['角速度°/s'] + [str(x) for x in report_data['left_shoulder_angle_data']['angle_speed']]]
-        except:
-            # 使用默认数据
-            temp_list = [['角速度°/s', '10', '20', '30', '40']]
-
+        
+        temp_list = [['左肩平均角速度°/s'] + [str(x) for x in report_data['left_shoulder_angle_data']['angle_speed']],
+                     ['右肩平均角速度°/s'] + [str(x) for x in report_data['right_shoulder_angle_data']['angle_speed']]]
+    
         table = doc.add_table(rows=1, cols=5)  # 只创建标题行
         hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = '左肩部项目'
+        hdr_cells[0].text = '角度范围'
         hdr_cells[1].text = '0~45°'
         hdr_cells[2].text = '45~90°'
         hdr_cells[3].text = '90~135°'
@@ -183,88 +181,103 @@ class ReportGenerator:
             row_cells[3].text = temp_list[i][3]
             row_cells[4].text = temp_list[i][4]
 
-        # 小标题
-        doc.add_heading('2.右肩部角速度', level=3)
-        # 添加表格，2行5列
-        # 列名分别为：项目、0~45°、45~90°、90~135°、135~180°
-        # 肩部角度数据list,用于填充表格
-        try:
-            temp_list = [['角速度°/s'] + [str(x) for x in report_data['right_shoulder_angle_data']['angle_speed']]]
-        except:
-            # 使用默认数据
-            temp_list = [['角速度°/s', '10', '20', '30', '40']]
-        
-        table = doc.add_table(rows=1, cols=5)  # 只创建标题行
-        hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = '右肩部项目'
-        hdr_cells[1].text = '0~45°'
-        hdr_cells[2].text = '45~90°'
-        hdr_cells[3].text = '90~135°'
-        hdr_cells[4].text = '135~180°'
-        # 添加数据
-        for i in range(len(temp_list)):
-            row_cells = table.add_row().cells  # 为每个数据行添加一行
-            row_cells[0].text = temp_list[i][0]
-            row_cells[1].text = temp_list[i][1]
-            row_cells[2].text = temp_list[i][2]
-            row_cells[3].text = temp_list[i][3]
-            row_cells[4].text = temp_list[i][4]
 
         # 小标题
-        doc.add_heading('3.角度信息', level=3)
-        # 1行4列，最大外展角度：		最大角度速度：
-        table = doc.add_table(rows=2, cols=4)
+        doc.add_heading('2.最大外展角度信息', level=3)
+        # 创建3行3列的表格，第一行为表头
+        table = doc.add_table(rows=3, cols=3)
         hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = '左肩部最大外展角度：'
-        # 添加数据  
-        hdr_cells[1].text = str(report_data['left_shoulder_angle_data']['max_angle'])
-        hdr_cells[2].text = '左肩部最大角度速度：'
-        hdr_cells[3].text = str(report_data['left_shoulder_angle_data']['max_angle_speed'])
-        hdr_cells = table.rows[1].cells
-        hdr_cells[0].text = '右肩部最大外展角度：'
-        # 添加数据  
-        hdr_cells[1].text = str(report_data['right_shoulder_angle_data']['max_angle'])
-        hdr_cells[2].text = '右肩部最大角度速度：'
-        hdr_cells[3].text = str(report_data['right_shoulder_angle_data']['max_angle_speed'])
+        hdr_cells[0].text = '角度信息'
+        hdr_cells[1].text = '最大角度'
+        hdr_cells[2].text = '最大角速度'
+        # 左肩数据
+        left_cells = table.rows[1].cells
+        left_cells[0].text = '左肩'
+        left_cells[1].text = str(report_data['left_shoulder_angle_data']['max_angle'])
+        left_cells[2].text = str(report_data['left_shoulder_angle_data']['max_angle_speed'])
+        # 右肩数据
+        right_cells = table.rows[2].cells
+        right_cells[0].text = '右肩'
+        right_cells[1].text = str(report_data['right_shoulder_angle_data']['max_angle'])
+        right_cells[2].text = str(report_data['right_shoulder_angle_data']['max_angle_speed'])
 
         # 小标题
-        doc.add_heading('4.腕部关节信息', level=3)
-        # 1行2列，左腕高度比：		右边高度比：
-        table = doc.add_table(rows=1, cols=4)
-        hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = '左腕高度比：'
-        hdr_cells[1].text = str(report_data['wrist_joint_data']['left_wrist_height_ratio'])
-        hdr_cells[2].text = '右腕高度比：'
-        hdr_cells[3].text = str(report_data['wrist_joint_data']['right_wrist_height_ratio'])
+        doc.add_heading('3.最大外展角角度视图', level=3)
+        # 插入图片,先不用操作
+
+        # 小标题
+        doc.add_heading('4.角度和角度速度曲线图', level=3)
+        # 插入图片,先不用操作
 
         # 直接插入分页符
         doc.add_page_break()
+
         
         # 小标题
-        doc.add_heading('5、正面-肩部角度曲线图', level=3)
-        # 添加图片
-        try:
-            doc.add_picture(report_data['image_path']['front_shoulder_angle_speed'], width=Inches(5))
-        except:
-            doc.add_paragraph('正面-肩部角度曲线图（图片加载失败）')
+        doc.add_heading('三、侧视前屈运动信息', level=2)
+        # 角度范围	0~45°	45~90°	90~135°	135~180°
+        # 平均角速度°/s	3.25	3.03	3.18	2.61
+        doc.add_heading('1.平均角速度', level=3)
+        table = doc.add_table(rows=1, cols=5)
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = '角度范围'
+        hdr_cells[1].text = '0~45°'
+        hdr_cells[2].text = '45~90°'
+        hdr_cells[3].text = '90~135°'
+        hdr_cells[4].text = '135~180°'
+        # 添加数据
+        for i in range(len(temp_list)):
+            row_cells = table.add_row().cells  # 为每个数据行添加一行
+            row_cells[0].text = temp_list[i][0]
+            row_cells[1].text = temp_list[i][1]
+            row_cells[2].text = temp_list[i][2]
+            row_cells[3].text = temp_list[i][3]
+            row_cells[4].text = temp_list[i][4]
 
-        doc.add_heading('6、侧面-肩部角度曲线图', level=3)
-        # 添加图片
-        try:
-            doc.add_picture(report_data['image_path']['side_shoulder_angle_speed'], width=Inches(5))
-        except:
-            doc.add_paragraph('侧面-肩部角度曲线图（图片加载失败）')
+        doc.add_heading('2.最大外展角度信息', level=3)
+        # 角度信息	最大角度	最大角速度
+        # 外侧肩(就是前端网页选择的那个左侧还是右侧,只需要这个就行)		
+        # 创建表格，2行3列
+        table = doc.add_table(rows=2, cols=3)
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = '角度信息'
+        hdr_cells[1].text = '最大角度'
+        hdr_cells[2].text = '最大角速度'
 
-        doc.add_heading('7、背部-手腕高度图', level=3)
-        # 添加图片
-        try:
-            doc.add_picture(report_data['image_path']['back_wrist_height'], width=Inches(5))
-        except:
-            doc.add_paragraph('背部-手腕高度图（图片加载失败）')
+        doc.add_heading('3.最大外展角角度视图', level=3)
+        # 插入图片,先不用操作
+        doc.add_heading('4.角度和角度速度曲线图', level=3)
+        # 插入图片,先不用操作
 
-        
+        # 直接插入分页符
+        doc.add_page_break()
+
+
+        doc.add_heading('四、后视腕部运动信息', level=2)
+        doc.add_heading('1.左右腕部最大高度比例信息', level=3)
+
+        # 创建1行2列的表格，分别为左腕高度比和右腕高度比
+        table = doc.add_table(rows=1, cols=2)
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = '左腕高度比'
+        hdr_cells[1].text = '右腕高度比'
+        # 添加数据行
+        row_cells = table.add_row().cells
+        row_cells[0].text = str(report_data['wrist_joint_data']['left_wrist_height_ratio'])
+        row_cells[1].text = str(report_data['wrist_joint_data']['right_wrist_height_ratio'])
+
+        doc.add_heading('2.左右腕部最大高度比图', level=3)
+        # 插入图片,先不用操作
+
+        doc.add_heading('3.左右腕部高度比例变化曲线图', level=3)
+        # 插入图片,先不用操作
+
+        # 直接插入分页符
+        doc.add_page_break()
+
+
         # 结果报告    
-        doc.add_heading('三、结果报告', level=2)
+        doc.add_heading('五、结果报告', level=2)
         # 三行两列
         # 功能评分：
         # 功能报告：
