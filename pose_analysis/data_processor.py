@@ -1,6 +1,6 @@
 """
 数据处理模块
-负责计算速度、加速度、生成图表等
+负责计算速度、生成图表等
 """
 
 import numpy as np
@@ -45,33 +45,6 @@ class DataProcessor:
             })
         
         return velocity_data
-    
-    def calculate_acceleration(self, velocity_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        计算角加速度
-        
-        Args:
-            velocity_data: 速度数据列表
-            
-        Returns:
-            List[Dict[str, Any]]: 加速度数据列表
-        """
-        acceleration_data = []
-        
-        for i in range(1, len(velocity_data)):
-            prev_frame = velocity_data[i-1]
-            curr_frame = velocity_data[i]
-            
-            left_acceleration = curr_frame['left_velocity'] - prev_frame['left_velocity']
-            right_acceleration = curr_frame['right_velocity'] - prev_frame['right_velocity']
-            
-            acceleration_data.append({
-                'frame': curr_frame['frame'],
-                'left_acceleration': left_acceleration,
-                'right_acceleration': right_acceleration
-            })
-        
-        return acceleration_data
     
     def apply_moving_average(self, data: List[float], window_size: int = 6) -> List[float]:
         """
@@ -193,55 +166,6 @@ class DataProcessor:
                     # 使用中文文件名
                     angle_name = '正面' if angle == 'front' else '侧面'
                     charts[f'{angle_name}_角度分析'] = fig
-                    
-                    # 生成角度-加速度分布图
-                    if result.get('acceleration_data'):
-                        left_accelerations = [d['left_acceleration'] for d in result['acceleration_data']]
-                        right_accelerations = [d['right_acceleration'] for d in result['acceleration_data']]
-                        
-                        # 侧面角度不区分左肩右肩，直接画两个肩的数据
-                        if angle == 'side':
-                            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
-                            # 左肩角度-加速度
-                            ax1.scatter(left_angles_filtered[:len(left_accelerations)], left_accelerations, 
-                                        c='purple', alpha=0.6, label='左肩')
-                            ax1.set_xlabel('角度 (度)')
-                            ax1.set_ylabel('角加速度 (度/帧²)')
-                            ax1.set_title(f'{angle}角度 - 左肩角度-加速度分布')
-                            ax1.legend()
-                            ax1.grid(True, alpha=0.3)
-                            # 右肩角度-加速度
-                            ax2.scatter(right_angles_filtered[:len(right_accelerations)], right_accelerations, 
-                                        c='brown', alpha=0.6, label='右肩')
-                            ax2.set_xlabel('角度 (度)')
-                            ax2.set_ylabel('角加速度 (度/帧²)')
-                            ax2.set_title(f'{angle}角度 - 右肩角度-加速度分布')
-                            ax2.legend()
-                            ax2.grid(True, alpha=0.3)
-                        else:
-                            # 正面角度或其他情况：显示两个图表
-                            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
-                            # 左肩角度-加速度
-                            ax1.scatter(left_angles_filtered[:len(left_accelerations)], left_accelerations, 
-                                        c='purple', alpha=0.6, label='左肩')
-                            ax1.set_xlabel('角度 (度)')
-                            ax1.set_ylabel('角加速度 (度/帧²)')
-                            ax1.set_title(f'{angle}角度 - 左肩角度-加速度分布')
-                            ax1.legend()
-                            ax1.grid(True, alpha=0.3)
-                            # 右肩角度-加速度
-                            ax2.scatter(right_angles_filtered[:len(right_accelerations)], right_accelerations, 
-                                        c='brown', alpha=0.6, label='右肩')
-                            ax2.set_xlabel('角度 (度)')
-                            ax2.set_ylabel('角加速度 (度/帧²)')
-                            ax2.set_title(f'{angle}角度 - 右肩角度-加速度分布')
-                            ax2.legend()
-                            ax2.grid(True, alpha=0.3)
-                        
-                        plt.tight_layout()
-                        # 使用中文文件名
-                        angle_name = '正面' if angle == 'front' else '侧面'
-                        charts[f'{angle_name}_加速度分析'] = fig
         
         # 处理后视数据（手腕高度）
         if 'back' in analysis_results and analysis_results['back']:
@@ -339,7 +263,7 @@ class DataProcessor:
                     'angle_range': round(max(right_angles) - min(right_angles), 2)
                 }
                 
-                # 计算速度和加速度数据
+                # 计算速度数据
                 if result.get('velocity_data'):
                     left_velocities = [d['left_velocity'] for d in result['velocity_data']]
                     right_velocities = [d['right_velocity'] for d in result['velocity_data']]
@@ -352,19 +276,6 @@ class DataProcessor:
                     processed_data['right_shoulder_data']['velocity_stages'] = right_velocity_stages
                     processed_data['left_shoulder_data']['max_velocity'] = round(max(abs(v) for v in left_velocities), 2)
                     processed_data['right_shoulder_data']['max_velocity'] = round(max(abs(v) for v in right_velocities), 2)
-                
-                if result.get('acceleration_data'):
-                    left_accelerations = [d['left_acceleration'] for d in result['acceleration_data']]
-                    right_accelerations = [d['right_acceleration'] for d in result['acceleration_data']]
-                    
-                    # 分阶段加速度数据
-                    left_acceleration_stages = self.calculate_stage_accelerations(left_angles, left_accelerations)
-                    right_acceleration_stages = self.calculate_stage_accelerations(right_angles, right_accelerations)
-                    
-                    processed_data['left_shoulder_data']['acceleration_stages'] = left_acceleration_stages
-                    processed_data['right_shoulder_data']['acceleration_stages'] = right_acceleration_stages
-                    processed_data['left_shoulder_data']['max_acceleration'] = round(max(abs(a) for a in left_accelerations), 2)
-                    processed_data['right_shoulder_data']['max_acceleration'] = round(max(abs(a) for a in right_accelerations), 2)
         
         # 处理后视数据
         if 'back' in analysis_results and analysis_results['back']:
@@ -413,33 +324,6 @@ class DataProcessor:
         
         return stage_velocities
     
-    def calculate_stage_accelerations(self, angles: List[float], accelerations: List[float]) -> List[float]:
-        """
-        计算分阶段加速度数据
-        
-        Args:
-            angles: 角度列表
-            accelerations: 加速度列表
-            
-        Returns:
-            List[float]: 分阶段加速度数据
-        """
-        stages = [(0, 45), (45, 90), (90, 135), (135, 180)]
-        stage_accelerations = []
-        
-        for stage_min, stage_max in stages:
-            stage_accelerations_in_range = []
-            for i, angle in enumerate(angles):
-                if stage_min <= angle <= stage_max and i < len(accelerations):
-                    stage_accelerations_in_range.append(abs(accelerations[i]))
-            
-            if stage_accelerations_in_range:
-                stage_accelerations.append(round(np.mean(stage_accelerations_in_range), 2))
-            else:
-                stage_accelerations.append(0.0)
-        
-        return stage_accelerations
-    
     def generate_summary(self, processed_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         生成综合评估摘要
@@ -456,7 +340,7 @@ class DataProcessor:
             'recommendations': []
         }
         
-        # 计算功能评分（基于最大角度、速度、加速度等指标）
+        # 计算功能评分（基于最大角度、速度等指标）
         score = 0
         total_indicators = 0
         

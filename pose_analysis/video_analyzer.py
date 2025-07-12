@@ -58,7 +58,6 @@ class VideoAnalyzer:
         # 初始化数据列表
         angle_data = []
         velocity_data = []
-        acceleration_data = []
         wrist_height_data = []
         annotated_frames = []
         
@@ -142,10 +141,9 @@ class VideoAnalyzer:
         
         cap.release()
         
-        # 计算速度和加速度
+        # 计算速度
         if angle in ["front", "side"] and angle_data:
             velocity_data = self.data_processor.calculate_velocity(angle_data)
-            acceleration_data = self.data_processor.calculate_acceleration(velocity_data)
         
         # 整理分析结果
         analysis_result = {
@@ -158,7 +156,6 @@ class VideoAnalyzer:
             'analysis_end_time': end_time,  # 分析结束时间
             'angle_data': angle_data,
             'velocity_data': velocity_data,
-            'acceleration_data': acceleration_data,
             'wrist_height_data': wrist_height_data,
             'annotated_frames': annotated_frames,
             'analysis_time': datetime.now().isoformat()

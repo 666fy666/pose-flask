@@ -76,19 +76,15 @@ class ReportGenerator:
         # 准备左肩部角度数据
         left_shoulder_angle_data = {
             "angle_speed": left_shoulder_data.get('velocity_stages', [0, 0, 0, 0]),
-            "angle_acceleration": left_shoulder_data.get('acceleration_stages', [0, 0, 0, 0]),
             "max_angle": left_shoulder_data.get('max_angle', 0),
-            "max_angle_speed": left_shoulder_data.get('max_velocity', 0),
-            "max_angle_acceleration": left_shoulder_data.get('max_acceleration', 0)
+            "max_angle_speed": left_shoulder_data.get('max_velocity', 0)
         }
         
         # 准备右肩部角度数据
         right_shoulder_angle_data = {
             "angle_speed": right_shoulder_data.get('velocity_stages', [0, 0, 0, 0]),
-            "angle_acceleration": right_shoulder_data.get('acceleration_stages', [0, 0, 0, 0]),
             "max_angle": right_shoulder_data.get('max_angle', 0),
-            "max_angle_speed": right_shoulder_data.get('max_velocity', 0),
-            "max_angle_acceleration": right_shoulder_data.get('max_acceleration', 0)
+            "max_angle_speed": right_shoulder_data.get('max_velocity', 0)
         }
         
         # 准备腕部关节数据
@@ -100,9 +96,7 @@ class ReportGenerator:
         # 准备图片路径（使用相对路径）
         image_path = {
             "front_shoulder_angle_speed": os.path.join(output_dir, "..", "analysis_results", "正面_角度分析.png"),
-            "front_shoulder_angle_acceleration": os.path.join(output_dir, "..", "analysis_results", "正面_加速度分析.png"),
             "side_shoulder_angle_speed": os.path.join(output_dir, "..", "analysis_results", "侧面_角度分析.png"),
-            "side_shoulder_angle_acceleration": os.path.join(output_dir, "..", "analysis_results", "侧面_加速度分析.png"),
             "back_wrist_height": os.path.join(output_dir, "..", "analysis_results", "背面_手腕高度.png")
         }
         
@@ -163,17 +157,15 @@ class ReportGenerator:
         doc.add_heading('二、外展运动信息', level=2)
         
         # 小标题
-        doc.add_heading('1.左肩部角速度和角加速度', level=3)
-        # 添加表格，3行5列
+        doc.add_heading('1.左肩部角速度', level=3)
+        # 添加表格，2行5列
         # 列名分别为：项目、0~45°、45~90°、90~135°、135~180°
         # 肩部角度数据list,用于填充表格
         try:
-            temp_list = [['角速度°/s'] + [str(x) for x in report_data['left_shoulder_angle_data']['angle_speed']], 
-                        ['角加速度°/s²'] + [str(x) for x in report_data['left_shoulder_angle_data']['angle_acceleration']]]
+            temp_list = [['角速度°/s'] + [str(x) for x in report_data['left_shoulder_angle_data']['angle_speed']]]
         except:
             # 使用默认数据
-            temp_list = [['角速度°/s', '10', '20', '30', '40'], 
-                        ['角加速度°/s²', '10', '20', '30', '40']]
+            temp_list = [['角速度°/s', '10', '20', '30', '40']]
 
         table = doc.add_table(rows=1, cols=5)  # 只创建标题行
         hdr_cells = table.rows[0].cells
@@ -192,17 +184,15 @@ class ReportGenerator:
             row_cells[4].text = temp_list[i][4]
 
         # 小标题
-        doc.add_heading('2.右肩部角速度和角加速度', level=3)
-        # 添加表格，3行5列
+        doc.add_heading('2.右肩部角速度', level=3)
+        # 添加表格，2行5列
         # 列名分别为：项目、0~45°、45~90°、90~135°、135~180°
         # 肩部角度数据list,用于填充表格
         try:
-            temp_list = [['角速度°/s'] + [str(x) for x in report_data['right_shoulder_angle_data']['angle_speed']], 
-                        ['角加速度°/s²'] + [str(x) for x in report_data['right_shoulder_angle_data']['angle_acceleration']]]
+            temp_list = [['角速度°/s'] + [str(x) for x in report_data['right_shoulder_angle_data']['angle_speed']]]
         except:
             # 使用默认数据
-            temp_list = [['角速度°/s', '10', '20', '30', '40'], 
-                        ['角加速度°/s²', '10', '20', '30', '40']]
+            temp_list = [['角速度°/s', '10', '20', '30', '40']]
         
         table = doc.add_table(rows=1, cols=5)  # 只创建标题行
         hdr_cells = table.rows[0].cells
@@ -222,24 +212,20 @@ class ReportGenerator:
 
         # 小标题
         doc.add_heading('3.角度信息', level=3)
-        # 1行6列，最大外展角度：		最大角度速度： 		最大角加速度：
-        table = doc.add_table(rows=2, cols=6)
+        # 1行4列，最大外展角度：		最大角度速度：
+        table = doc.add_table(rows=2, cols=4)
         hdr_cells = table.rows[0].cells
         hdr_cells[0].text = '左肩部最大外展角度：'
         # 添加数据  
         hdr_cells[1].text = str(report_data['left_shoulder_angle_data']['max_angle'])
         hdr_cells[2].text = '左肩部最大角度速度：'
         hdr_cells[3].text = str(report_data['left_shoulder_angle_data']['max_angle_speed'])
-        hdr_cells[4].text = '左肩部最大角加速度：'
-        hdr_cells[5].text = str(report_data['left_shoulder_angle_data']['max_angle_acceleration'])
         hdr_cells = table.rows[1].cells
         hdr_cells[0].text = '右肩部最大外展角度：'
         # 添加数据  
         hdr_cells[1].text = str(report_data['right_shoulder_angle_data']['max_angle'])
         hdr_cells[2].text = '右肩部最大角度速度：'
         hdr_cells[3].text = str(report_data['right_shoulder_angle_data']['max_angle_speed'])
-        hdr_cells[4].text = '右肩部最大角加速度：'
-        hdr_cells[5].text = str(report_data['right_shoulder_angle_data']['max_angle_acceleration'])
 
         # 小标题
         doc.add_heading('4.腕部关节信息', level=3)
@@ -261,29 +247,15 @@ class ReportGenerator:
             doc.add_picture(report_data['image_path']['front_shoulder_angle_speed'], width=Inches(5))
         except:
             doc.add_paragraph('正面-肩部角度曲线图（图片加载失败）')
-            
-        doc.add_heading('6、正面-肩部加速度曲线图', level=3)
-        # 添加图片
-        try:
-            doc.add_picture(report_data['image_path']['front_shoulder_angle_acceleration'], width=Inches(5))
-        except:
-            doc.add_paragraph('正面-肩部加速度曲线图（图片加载失败）')
 
-        doc.add_heading('7、侧面-肩部角度曲线图', level=3)
+        doc.add_heading('6、侧面-肩部角度曲线图', level=3)
         # 添加图片
         try:
             doc.add_picture(report_data['image_path']['side_shoulder_angle_speed'], width=Inches(5))
         except:
             doc.add_paragraph('侧面-肩部角度曲线图（图片加载失败）')
-            
-        doc.add_heading('8、侧面-肩部加速度曲线图', level=3)
-        # 添加图片
-        try:
-            doc.add_picture(report_data['image_path']['side_shoulder_angle_acceleration'], width=Inches(5))
-        except:
-            doc.add_paragraph('侧面-肩部加速度曲线图（图片加载失败）')
 
-        doc.add_heading('9、背部-手腕高度图', level=3)
+        doc.add_heading('7、背部-手腕高度图', level=3)
         # 添加图片
         try:
             doc.add_picture(report_data['image_path']['back_wrist_height'], width=Inches(5))
