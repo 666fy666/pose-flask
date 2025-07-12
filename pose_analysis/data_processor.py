@@ -304,20 +304,25 @@ class DataProcessor:
             left_angles = [d['left_angle'] for d in front_result['angle_data']]
             right_angles = [d['right_angle'] for d in front_result['angle_data']]
             
+            # 修改：只计算后50%帧中的数据，与关键帧图片生成逻辑保持一致
+            half_length = len(left_angles) // 2
+            left_angles_second_half = left_angles[half_length:]
+            right_angles_second_half = right_angles[half_length:]
+            
             # 左肩数据
             front_data['left_shoulder_data'] = {
-                'max_angle': round(max(left_angles), 2),
-                'min_angle': round(min(left_angles), 2),
+                'max_angle': round(max(left_angles_second_half), 2),
+                'min_angle': round(min(left_angles_second_half), 2),
                 'avg_angle': round(np.mean(left_angles), 2),
-                'angle_range': round(max(left_angles) - min(left_angles), 2)
+                'angle_range': round(max(left_angles_second_half) - min(left_angles_second_half), 2)
             }
             
             # 右肩数据
             front_data['right_shoulder_data'] = {
-                'max_angle': round(max(right_angles), 2),
-                'min_angle': round(min(right_angles), 2),
+                'max_angle': round(max(right_angles_second_half), 2),
+                'min_angle': round(min(right_angles_second_half), 2),
                 'avg_angle': round(np.mean(right_angles), 2),
-                'angle_range': round(max(right_angles) - min(right_angles), 2)
+                'angle_range': round(max(right_angles_second_half) - min(right_angles_second_half), 2)
             }
             
             # 计算速度数据
@@ -355,20 +360,25 @@ class DataProcessor:
             left_angles = [d['left_angle'] for d in side_result['angle_data']]
             right_angles = [d['right_angle'] for d in side_result['angle_data']]
             
+            # 修改：只计算后50%帧中的数据，与关键帧图片生成逻辑保持一致
+            half_length = len(left_angles) // 2
+            left_angles_second_half = left_angles[half_length:]
+            right_angles_second_half = right_angles[half_length:]
+            
             # 左肩数据
             side_data['left_shoulder_data'] = {
-                'max_angle': round(max(left_angles), 2),
-                'min_angle': round(min(left_angles), 2),
+                'max_angle': round(max(left_angles_second_half), 2),
+                'min_angle': round(min(left_angles_second_half), 2),
                 'avg_angle': round(np.mean(left_angles), 2),
-                'angle_range': round(max(left_angles) - min(left_angles), 2)
+                'angle_range': round(max(left_angles_second_half) - min(left_angles_second_half), 2)
             }
             
             # 右肩数据
             side_data['right_shoulder_data'] = {
-                'max_angle': round(max(right_angles), 2),
-                'min_angle': round(min(right_angles), 2),
+                'max_angle': round(max(right_angles_second_half), 2),
+                'min_angle': round(min(right_angles_second_half), 2),
                 'avg_angle': round(np.mean(right_angles), 2),
-                'angle_range': round(max(right_angles) - min(right_angles), 2)
+                'angle_range': round(max(right_angles_second_half) - min(right_angles_second_half), 2)
             }
             
             # 计算速度数据
@@ -403,9 +413,14 @@ class DataProcessor:
             left_heights = [d['left_wrist_height'] for d in back_result['wrist_height_data']]
             right_heights = [d['right_wrist_height'] for d in back_result['wrist_height_data']]
             
+            # 修改：只计算后50%帧中的最大值，与关键帧图片生成逻辑保持一致
+            half_length = len(left_heights) // 2
+            left_heights_second_half = left_heights[half_length:]
+            right_heights_second_half = right_heights[half_length:]
+            
             wrist_data = {
-                'left_max_height': round(max(left_heights), 2),
-                'right_max_height': round(max(right_heights), 2),
+                'left_max_height': round(max(left_heights_second_half), 2),
+                'right_max_height': round(max(right_heights_second_half), 2),
                 'left_avg_height': round(np.mean(left_heights), 2),
                 'right_avg_height': round(np.mean(right_heights), 2)
             }

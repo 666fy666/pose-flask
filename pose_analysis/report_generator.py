@@ -115,8 +115,8 @@ class ReportGenerator:
         
         # 准备腕部关节数据
         wrist_joint_data = {
-            "left_wrist_height_ratio": wrist_data.get('left_max_height', 0),
-            "right_wrist_height_ratio": wrist_data.get('right_max_height', 0)
+            "left_max_height": wrist_data.get('left_max_height', 0),
+            "right_max_height": wrist_data.get('right_max_height', 0)
         }
         
         # 准备图片路径（使用相对路径）
@@ -337,8 +337,8 @@ class ReportGenerator:
         hdr_cells[1].text = '右腕高度比'
         # 添加数据行
         row_cells = table.add_row().cells
-        row_cells[0].text = str(report_data['wrist_joint_data']['left_wrist_height_ratio'])
-        row_cells[1].text = str(report_data['wrist_joint_data']['right_wrist_height_ratio'])
+        row_cells[0].text = str(report_data['wrist_joint_data']['left_max_height'])
+        row_cells[1].text = str(report_data['wrist_joint_data']['right_max_height'])
 
         doc.add_heading('2.左右腕部最大高度比图', level=3)
         # 插入左右腕部最大高度比图

@@ -2,7 +2,7 @@
   "patient_info": {
     "id": 2,
     "name": "李四",
-    "analysis_time": "2025-07-12 16:32:12",
+    "analysis_time": "2025-07-12 18:23:44",
     "age": 50,
     "gender": "女",
     "height": 159.0,
@@ -17,72 +17,71 @@
   "front_shoulder_data": {
     "left_shoulder_data": {
       "max_angle": 167.99,
-      "min_angle": 21.5,
+      "min_angle": 127.69,
       "avg_angle": 105.67,
-      "angle_range": 146.49,
+      "angle_range": 40.3,
       "velocity_stages": [
-        0.84,
-        2.67,
-        2.39,
-        0.7
+        24.89,
+        78.51,
+        70.29,
+        20.71
       ],
-      "max_velocity": 6.34
+      "max_velocity": 186.69
     },
     "right_shoulder_data": {
       "max_angle": 118.93,
-      "min_angle": 21.87,
+      "min_angle": 95.88,
       "avg_angle": 79.49,
-      "angle_range": 97.06,
+      "angle_range": 23.05,
       "velocity_stages": [
-        0.8,
-        2.13,
-        0.62,
+        23.45,
+        62.78,
+        18.27,
         0.0
       ],
-      "max_velocity": 7.18
+      "max_velocity": 211.5
     }
   },
   "side_shoulder_data": {
     "left_shoulder_data": {
-      "max_angle": 176.07,
-      "min_angle": 57.7,
-      "avg_angle": 150.81,
-      "angle_range": 118.37,
+      "max_angle": 144.59,
+      "min_angle": 101.94,
+      "avg_angle": 109.63,
+      "angle_range": 42.66,
       "velocity_stages": [
-        0.0,
-        5.02,
-        0.0,
-        1.45
+        78.74,
+        44.75,
+        39.24,
+        90.62
       ],
-      "max_velocity": 89.89
+      "max_velocity": 4025.55
     },
     "right_shoulder_data": {
-      "max_angle": 171.7,
-      "min_angle": 152.89,
-      "avg_angle": 162.07,
-      "angle_range": 18.81,
+      "max_angle": 100.35,
+      "min_angle": 86.9,
+      "avg_angle": 72.01,
+      "angle_range": 13.45,
       "velocity_stages": [
-        0.0,
-        0.0,
-        0.0,
-        0.78
+        49.33,
+        35.57,
+        10.48,
+        0.0
       ],
-      "max_velocity": 4.79
+      "max_velocity": 115.42
     }
   },
   "wrist_data": {
-    "left_max_height": 2.7,
-    "right_max_height": 2.7,
+    "left_max_height": 0.34,
+    "right_max_height": 0.12,
     "left_avg_height": 0.46,
     "right_avg_height": 0.29
   },
   "summary": {
-    "function_score": 78.8,
-    "function_assessment": "肩关节运动功能基本正常，存在轻微活动受限，建议进一步观察。",
+    "function_score": 0,
+    "function_assessment": "功能开发中",
     "recommendations": [
-      "进行肩关节柔韧性训练",
-      "避免过度使用肩关节",
-      "定期进行功能评估"
+      "功能开发中",
+      "尚未实现"
     ]
   }
 }
