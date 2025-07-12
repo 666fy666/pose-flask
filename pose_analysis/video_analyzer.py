@@ -173,7 +173,8 @@ class VideoAnalyzer:
                              video_paths: Dict[str, str], conf: float = 0.25, 
                              iou: float = 0.45, stop_check_func=None,
                              patient_info: Optional[Dict[str, Any]] = None,
-                             timeline_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                             timeline_data: Optional[Dict[str, Any]] = None,
+                             shoulder_selection: str = 'left') -> Dict[str, Any]:
         """
         分析患者的所有视频文件
         
@@ -186,11 +187,13 @@ class VideoAnalyzer:
             stop_check_func: 停止检查函数，返回True表示需要停止
             patient_info: 患者详细信息（年龄、性别、身高、体重等）
             timeline_data: 时间轴数据字典，格式为 {'front': {'start': 0, 'end': 10}, ...}
+            shoulder_selection: 肩部选择，'left'表示左肩，'right'表示右肩
             
         Returns:
             Dict[str, Any]: 综合分析结果
         """
         print(f"开始分析患者 {patient_name} 的视频文件")
+        print(f"肩部选择: {shoulder_selection}")
         
         # 创建患者数据目录
         patient_folder = f"{patient_id}-{patient_name}"
@@ -229,8 +232,8 @@ class VideoAnalyzer:
             print("分析被停止，跳过后续处理")
             return None
         
-        # 生成分析图表
-        charts_data = self.data_processor.generate_charts(analysis_results, patient_name)
+        # 生成分析图表，传递肩部选择参数
+        charts_data = self.data_processor.generate_charts(analysis_results, patient_name, shoulder_selection)
         
         # 保存图表到文件
         chart_paths = {}

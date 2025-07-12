@@ -602,49 +602,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function startAnalysis() {
         if (!selectedPatient) {
-            showAlert('请先选择患者', 'error');
+            showAlert('请先选择患者', 'warning');
             return;
         }
         
-        // 检查是否已有分析在进行
-        if (analysisInProgress) {
-            showAlert('分析正在进行中，请稍候', 'warning');
-            return;
-        }
-        
-        // 检查是否有上传的视频
+        // 检查是否有视频文件
         const hasVideos = Object.values(uploadedVideos).some(video => video !== null);
         if (!hasVideos) {
-            showAlert('请先上传至少一个视频', 'error');
+            showAlert('请先上传视频文件', 'warning');
             return;
         }
         
-        // 开始分析
-        analysisInProgress = true;
-        updateAnalysisButtons(true);
-        
-        // 启动进度条动画
-        startProgressAnimation();
-        
+        // 获取分析参数
         const analysisType = document.getElementById('analysisType').value;
         const confidenceThreshold = document.getElementById('confidenceThreshold').value;
+        const shoulderSelection = document.getElementById('shoulderSelection').value; // 新增：获取肩部选择
         
         // 获取时间轴数据
         const timelineData = getTimelineDataForAnalysis();
-        console.log('发送的时间轴数据:', timelineData);
         
+        // 准备分析数据
         const analysisData = {
+            patientId: selectedPatient.id,
             videos: uploadedVideos,
             analysisType: analysisType,
             confidenceThreshold: parseInt(confidenceThreshold),
-            patientId: selectedPatient.id,
-            timelineData: timelineData  // 添加时间轴数据
+            shoulderSelection: shoulderSelection, // 新增：传递肩部选择参数
+            timelineData: timelineData
         };
         
+        console.log('开始分析，参数:', analysisData);
+        
+        // 开始分析
         fetch('/api/analyze_video', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify(analysisData)
         })
@@ -652,22 +645,25 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 currentAnalysisId = data.analysisId;
+                analysisInProgress = true;
+                
+                // 更新按钮状态
+                updateAnalysisButtons(true);
+                
+                // 开始进度动画
+                startProgressAnimation();
                 
                 // 开始轮询分析状态
                 pollAnalysisStatus(data.analysisId);
                 
+                showAlert('分析已开始，请等待完成', 'success');
             } else {
-                showAlert('分析失败：' + data.message, 'error');
-                analysisInProgress = false;
-                updateAnalysisButtons(false);
-                completeProgressAnimation();
+                showAlert(data.message || '分析失败', 'error');
             }
         })
         .catch(error => {
-            showAlert('分析失败：' + error.message, 'error');
-            analysisInProgress = false;
-            updateAnalysisButtons(false);
-            completeProgressAnimation();
+            console.error('分析请求失败:', error);
+            showAlert('分析请求失败，请重试', 'error');
         });
     }
 

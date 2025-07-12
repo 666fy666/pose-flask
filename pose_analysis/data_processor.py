@@ -95,13 +95,14 @@ class DataProcessor:
         
         return filtered_data
     
-    def generate_charts(self, analysis_results: Dict[str, Any], patient_name: str) -> Dict[str, plt.Figure]:
+    def generate_charts(self, analysis_results: Dict[str, Any], patient_name: str, shoulder_selection: str = 'left') -> Dict[str, plt.Figure]:
         """
         生成分析图表
         
         Args:
             analysis_results: 分析结果
             patient_name: 患者姓名
+            shoulder_selection: 肩部选择，'left'表示左肩，'right'表示右肩
             
         Returns:
             Dict[str, plt.Figure]: 图表字典
@@ -126,29 +127,67 @@ class DataProcessor:
                     # 生成角度-时间图
                     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
                     
-                    # 左肩角度
-                    ax1.plot(frames, left_angles_filtered, 'b-', linewidth=2, label='左肩')
-                    ax1.plot(frames, right_angles_filtered, 'r-', linewidth=2, label='右肩')
-                    ax1.set_xlabel('帧数')
-                    ax1.set_ylabel('角度 (度)')
-                    ax1.set_title(f'{angle}角度 - 肩关节角度变化')
-                    ax1.legend()
-                    ax1.grid(True, alpha=0.3)
+                    # 根据肩部选择决定显示哪些曲线
+                    if angle == 'side' and shoulder_selection == 'left':
+                        # 侧面角度且选择左肩：只显示左肩曲线
+                        ax1.plot(frames, left_angles_filtered, 'b-', linewidth=2, label='左肩')
+                        ax1.set_xlabel('帧数')
+                        ax1.set_ylabel('角度 (度)')
+                        ax1.set_title(f'{angle}角度 - 左肩关节角度变化')
+                        ax1.legend()
+                        ax1.grid(True, alpha=0.3)
+                    elif angle == 'side' and shoulder_selection == 'right':
+                        # 侧面角度且选择右肩：只显示右肩曲线
+                        ax1.plot(frames, right_angles_filtered, 'r-', linewidth=2, label='右肩')
+                        ax1.set_xlabel('帧数')
+                        ax1.set_ylabel('角度 (度)')
+                        ax1.set_title(f'{angle}角度 - 右肩关节角度变化')
+                        ax1.legend()
+                        ax1.grid(True, alpha=0.3)
+                    else:
+                        # 正面角度或其他情况：显示两条曲线
+                        ax1.plot(frames, left_angles_filtered, 'b-', linewidth=2, label='左肩')
+                        ax1.plot(frames, right_angles_filtered, 'r-', linewidth=2, label='右肩')
+                        ax1.set_xlabel('帧数')
+                        ax1.set_ylabel('角度 (度)')
+                        ax1.set_title(f'{angle}角度 - 肩关节角度变化')
+                        ax1.legend()
+                        ax1.grid(True, alpha=0.3)
                     
                     # 生成角度-速度分布图
                     if result.get('velocity_data'):
                         left_velocities = [d['left_velocity'] for d in result['velocity_data']]
                         right_velocities = [d['right_velocity'] for d in result['velocity_data']]
                         
-                        ax2.scatter(left_angles_filtered[:len(left_velocities)], left_velocities, 
-                                  c='blue', alpha=0.6, label='左肩')
-                        ax2.scatter(right_angles_filtered[:len(right_velocities)], right_velocities, 
-                                  c='red', alpha=0.6, label='右肩')
-                        ax2.set_xlabel('角度 (度)')
-                        ax2.set_ylabel('角速度 (度/帧)')
-                        ax2.set_title(f'{angle}角度 - 角度-速度分布')
-                        ax2.legend()
-                        ax2.grid(True, alpha=0.3)
+                        if angle == 'side' and shoulder_selection == 'left':
+                            # 侧面角度且选择左肩：只显示左肩数据
+                            ax2.scatter(left_angles_filtered[:len(left_velocities)], left_velocities, 
+                                      c='blue', alpha=0.6, label='左肩')
+                            ax2.set_xlabel('角度 (度)')
+                            ax2.set_ylabel('角速度 (度/帧)')
+                            ax2.set_title(f'{angle}角度 - 左肩角度-速度分布')
+                            ax2.legend()
+                            ax2.grid(True, alpha=0.3)
+                        elif angle == 'side' and shoulder_selection == 'right':
+                            # 侧面角度且选择右肩：只显示右肩数据
+                            ax2.scatter(right_angles_filtered[:len(right_velocities)], right_velocities, 
+                                      c='red', alpha=0.6, label='右肩')
+                            ax2.set_xlabel('角度 (度)')
+                            ax2.set_ylabel('角速度 (度/帧)')
+                            ax2.set_title(f'{angle}角度 - 右肩角度-速度分布')
+                            ax2.legend()
+                            ax2.grid(True, alpha=0.3)
+                        else:
+                            # 正面角度或其他情况：显示两条曲线
+                            ax2.scatter(left_angles_filtered[:len(left_velocities)], left_velocities, 
+                                      c='blue', alpha=0.6, label='左肩')
+                            ax2.scatter(right_angles_filtered[:len(right_velocities)], right_velocities, 
+                                      c='red', alpha=0.6, label='右肩')
+                            ax2.set_xlabel('角度 (度)')
+                            ax2.set_ylabel('角速度 (度/帧)')
+                            ax2.set_title(f'{angle}角度 - 角度-速度分布')
+                            ax2.legend()
+                            ax2.grid(True, alpha=0.3)
                     
                     plt.tight_layout()
                     # 使用中文文件名
@@ -162,21 +201,49 @@ class DataProcessor:
                         
                         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
                         
-                        # 左肩角度-加速度
-                        ax1.scatter(left_angles_filtered[:len(left_accelerations)], left_accelerations, 
-                                  c='purple', alpha=0.6)
-                        ax1.set_xlabel('角度 (度)')
-                        ax1.set_ylabel('角加速度 (度/帧²)')
-                        ax1.set_title(f'{angle}角度 - 左肩角度-加速度分布')
-                        ax1.grid(True, alpha=0.3)
-                        
-                        # 右肩角度-加速度
-                        ax2.scatter(right_angles_filtered[:len(right_accelerations)], right_accelerations, 
-                                  c='brown', alpha=0.6)
-                        ax2.set_xlabel('角度 (度)')
-                        ax2.set_ylabel('角加速度 (度/帧²)')
-                        ax2.set_title(f'{angle}角度 - 右肩角度-加速度分布')
-                        ax2.grid(True, alpha=0.3)
+                        if angle == 'side' and shoulder_selection == 'left':
+                            # 侧面角度且选择左肩：只显示左肩数据
+                            ax1.scatter(left_angles_filtered[:len(left_accelerations)], left_accelerations, 
+                                      c='purple', alpha=0.6, label='左肩')
+                            ax1.set_xlabel('角度 (度)')
+                            ax1.set_ylabel('角加速度 (度/帧²)')
+                            ax1.set_title(f'{angle}角度 - 左肩角度-加速度分布')
+                            ax1.legend()
+                            ax1.grid(True, alpha=0.3)
+                            
+                            # 隐藏右肩图表
+                            ax2.set_visible(False)
+                        elif angle == 'side' and shoulder_selection == 'right':
+                            # 侧面角度且选择右肩：只显示右肩数据
+                            ax2.scatter(right_angles_filtered[:len(right_accelerations)], right_accelerations, 
+                                      c='brown', alpha=0.6, label='右肩')
+                            ax2.set_xlabel('角度 (度)')
+                            ax2.set_ylabel('角加速度 (度/帧²)')
+                            ax2.set_title(f'{angle}角度 - 右肩角度-加速度分布')
+                            ax2.legend()
+                            ax2.grid(True, alpha=0.3)
+                            
+                            # 隐藏左肩图表
+                            ax1.set_visible(False)
+                        else:
+                            # 正面角度或其他情况：显示两个图表
+                            # 左肩角度-加速度
+                            ax1.scatter(left_angles_filtered[:len(left_accelerations)], left_accelerations, 
+                                      c='purple', alpha=0.6, label='左肩')
+                            ax1.set_xlabel('角度 (度)')
+                            ax1.set_ylabel('角加速度 (度/帧²)')
+                            ax1.set_title(f'{angle}角度 - 左肩角度-加速度分布')
+                            ax1.legend()
+                            ax1.grid(True, alpha=0.3)
+                            
+                            # 右肩角度-加速度
+                            ax2.scatter(right_angles_filtered[:len(right_accelerations)], right_accelerations, 
+                                      c='brown', alpha=0.6, label='右肩')
+                            ax2.set_xlabel('角度 (度)')
+                            ax2.set_ylabel('角加速度 (度/帧²)')
+                            ax2.set_title(f'{angle}角度 - 右肩角度-加速度分布')
+                            ax2.legend()
+                            ax2.grid(True, alpha=0.3)
                         
                         plt.tight_layout()
                         # 使用中文文件名
