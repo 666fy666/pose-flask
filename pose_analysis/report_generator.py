@@ -123,8 +123,17 @@ class ReportGenerator:
         image_path = {
             "front_shoulder_angle_speed": os.path.join(output_dir, "..", "analysis_results", "正面_角度分析.png"),
             "side_shoulder_angle_speed": os.path.join(output_dir, "..", "analysis_results", "侧面_角度分析.png"),
-            "back_wrist_height": os.path.join(output_dir, "..", "analysis_results", "背面_手腕高度.png")
+            "back_wrist_height": os.path.join(output_dir, "..", "analysis_results", "背面_手腕高度.png"),
+            # 关键帧图片路径
+            "max_abduction_angles": os.path.join(output_dir, "..", "analysis_results", "max_abduction_angles.png"),
+            "max_flexion_angle": os.path.join(output_dir, "..", "analysis_results", "max_flexion_angle.png"),
+            "max_wrist_heights": os.path.join(output_dir, "..", "analysis_results", "max_wrist_heights.png")
         }
+        
+        # 检查关键帧图片是否存在，如果不存在则设置为空字符串
+        for key in ["max_abduction_angles", "max_flexion_angle", "max_wrist_heights"]:
+            if not os.path.exists(image_path[key]):
+                image_path[key] = ""
         
         # 准备结果报告
         result_report = {
@@ -231,7 +240,14 @@ class ReportGenerator:
 
         # 小标题
         doc.add_heading('3.最大外展角角度视图', level=3)
-        # 插入图片,先不用操作
+        # 插入最大外展角角度视图
+        if report_data['image_path']['max_abduction_angles'] and os.path.exists(report_data['image_path']['max_abduction_angles']):
+            try:
+                doc.add_picture(report_data['image_path']['max_abduction_angles'], width=Inches(6))
+            except:
+                doc.add_paragraph('最大外展角角度视图（图片加载失败）')
+        else:
+            doc.add_paragraph('最大外展角角度视图（图片未生成）')
 
         # 小标题
         doc.add_heading('4.角度和角度速度曲线图', level=3)
@@ -291,7 +307,14 @@ class ReportGenerator:
         selected_cells[2].text = str(selected_shoulder_data['max_angle_speed'])
 
         doc.add_heading('3.最大前屈角角度视图', level=3)
-        # 插入图片,先不用操作
+        # 插入最大前屈角角度视图
+        if report_data['image_path']['max_flexion_angle'] and os.path.exists(report_data['image_path']['max_flexion_angle']):
+            try:
+                doc.add_picture(report_data['image_path']['max_flexion_angle'], width=Inches(3))
+            except:
+                doc.add_paragraph('最大前屈角角度视图（图片加载失败）')
+        else:
+            doc.add_paragraph('最大前屈角角度视图（图片未生成）')
         doc.add_heading('4.角度和角度速度曲线图', level=3)
         # 插入图片,先不用操作
                 # 添加图片
@@ -318,7 +341,14 @@ class ReportGenerator:
         row_cells[1].text = str(report_data['wrist_joint_data']['right_wrist_height_ratio'])
 
         doc.add_heading('2.左右腕部最大高度比图', level=3)
-        # 插入图片,先不用操作
+        # 插入左右腕部最大高度比图
+        if report_data['image_path']['max_wrist_heights'] and os.path.exists(report_data['image_path']['max_wrist_heights']):
+            try:
+                doc.add_picture(report_data['image_path']['max_wrist_heights'], width=Inches(6))
+            except:
+                doc.add_paragraph('左右腕部最大高度比图（图片加载失败）')
+        else:
+            doc.add_paragraph('左右腕部最大高度比图（图片未生成）')
 
         doc.add_heading('3.左右腕部高度比例变化曲线图', level=3)
         # 插入图片,先不用操作
@@ -329,8 +359,7 @@ class ReportGenerator:
             doc.add_paragraph('背面-手腕高度曲线图（图片加载失败）')
 
         # 直接插入分页符
-        doc.add_page_break()
-
+        # doc.add_page_break()
 
         # 结果报告    
         doc.add_heading('五、结果报告', level=2)

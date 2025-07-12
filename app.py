@@ -632,6 +632,12 @@ def run_analysis_task(analysis_id, patient_id, patient_name, video_paths, confid
             filename = os.path.basename(file_path)
             video_output_paths[angle] = f"/api/patients/{patient_id}/analysis_results/{filename}"
         
+        # 转换关键帧图片路径为API路径
+        keyframe_paths = {}
+        for keyframe_name, file_path in analysis_result.get('keyframe_paths', {}).items():
+            filename = os.path.basename(file_path)
+            keyframe_paths[keyframe_name] = f"/api/patients/{patient_id}/analysis_results/{filename}"
+        
         # 转换报告路径
         report_path = ""
         if analysis_result.get('report_path'):
@@ -666,6 +672,7 @@ def run_analysis_task(analysis_id, patient_id, patient_name, video_paths, confid
         analysis_status[analysis_id]['result'] = {
             'chartPaths': chart_paths,
             'videoOutputPaths': video_output_paths,
+            'keyframePaths': keyframe_paths,  # 添加关键帧图片路径
             'reportPath': report_path,
             'summary': serializable_summary,
             'chartFilesExist': chart_files_exist
@@ -871,12 +878,22 @@ def get_patient_analysis_results(patient_id):
             # 获取图表文件
             chart_files = []
             for file in os.listdir(analysis_dir):
-                if file.endswith('.png'):
+                if file.endswith('.png') and not file.startswith('max_'):
                     chart_files.append({
                         'name': file,
                         'url': f"/api/patients/{patient_id}/analysis_results/{file}"
                     })
             results['analysis_results']['charts'] = chart_files
+            
+            # 获取关键帧图片文件
+            keyframe_files = []
+            for file in os.listdir(analysis_dir):
+                if file.endswith('.png') and file.startswith('max_'):
+                    keyframe_files.append({
+                        'name': file,
+                        'url': f"/api/patients/{patient_id}/analysis_results/{file}"
+                    })
+            results['analysis_results']['keyframes'] = keyframe_files
             
             # 获取分析数据
             data_file = os.path.join(analysis_dir, 'analysis_data.json')

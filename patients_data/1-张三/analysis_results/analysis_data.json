@@ -2,7 +2,7 @@
   "patient_info": {
     "id": 1,
     "name": "张三",
-    "analysis_time": "2025-07-12 17:11:20",
+    "analysis_time": "2025-07-12 17:52:52",
     "age": 66,
     "gender": "男",
     "height": 175.0,
@@ -77,12 +77,11 @@
     "right_avg_height": 0.29
   },
   "summary": {
-    "function_score": 84.2,
-    "function_assessment": "肩关节运动功能基本正常，存在轻微活动受限，建议进一步观察。",
+    "function_score": 0,
+    "function_assessment": "功能开发中",
     "recommendations": [
-      "进行肩关节柔韧性训练",
-      "避免过度使用肩关节",
-      "定期进行功能评估"
+      "功能开发中",
+      "尚未实现"
     ]
   }
 }

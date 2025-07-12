@@ -545,5 +545,11 @@ class DataProcessor:
                 "咨询专业医生进行详细检查",
                 "制定个性化康复计划"
             ]
+
+        summary_demo = {
+            'function_score': 0,
+            'function_assessment': '功能开发中',
+            'recommendations': ['功能开发中',"尚未实现"]
+        }
         
-        return summary 
+        return summary_demo 

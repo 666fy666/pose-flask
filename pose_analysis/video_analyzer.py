@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from typing import Dict, List, Tuple, Optional, Any
 from datetime import datetime
 import json
+from PIL import Image, ImageDraw, ImageFont
 from .pose_detector import PoseDetector
 from .data_processor import DataProcessor
 from .report_generator import ReportGenerator
@@ -250,6 +251,15 @@ class VideoAnalyzer:
             print("分析被停止，跳过报告生成")
             return None
         
+        # 生成关键帧图片
+        keyframe_paths = {}
+        if stop_check_func and stop_check_func():
+            print("分析被停止，跳过关键帧图片生成")
+        else:
+            keyframe_paths = self.generate_keyframe_images(
+                analysis_results, video_paths, analysis_dir, shoulder_selection
+            )
+        
         # 生成分析报告
         report_data = self.data_processor.process_analysis_data(
             analysis_results, patient_name, patient_id, patient_info
@@ -283,6 +293,7 @@ class VideoAnalyzer:
             'analysis_results': analysis_results,
             'chart_paths': chart_paths,
             'video_output_paths': video_output_paths,
+            'keyframe_paths': keyframe_paths,  # 添加关键帧图片路径
             'report_data': report_data,
             'report_path': report_path,
             'analysis_time': datetime.now().isoformat()
@@ -316,3 +327,346 @@ class VideoAnalyzer:
         out.release()
         print(f"标注视频已保存: {output_path}")
         print(f"视频信息: {len(frames)}帧, 帧率: {fps:.2f} FPS, 时长: {len(frames)/fps:.2f}秒")
+
+    def _draw_chinese_text(self, image: np.ndarray, text: str, position: Tuple[int, int], 
+                          font_size: int = 30, color: Tuple[int, int, int] = (255, 255, 255)) -> np.ndarray:
+        """
+        在图像上绘制中文文字
+        
+        Args:
+            image: 输入图像
+            text: 要绘制的文字
+            position: 文字位置 (x, y)
+            font_size: 字体大小
+            color: 文字颜色 (R, G, B)
+            
+        Returns:
+            np.ndarray: 绘制文字后的图像
+        """
+        try:
+            # 转换OpenCV图像为PIL图像
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            pil_image = Image.fromarray(image_rgb)
+            
+            # 创建绘图对象
+            draw = ImageDraw.Draw(pil_image)
+            
+            # 尝试加载中文字体，按优先级尝试
+            font = None
+            font_paths = [
+                "/usr/share/fonts/opentype/noto/NotoSansCJK-Medium.ttc",  # Noto Sans CJK
+                "/usr/share/fonts/opentype/noto/NotoSerifCJK-Bold.ttc",   # Noto Serif CJK
+                "/usr/share/fonts/truetype/arphic/ukai.ttc",              # AR PL UKai
+                "/usr/share/fonts/truetype/arphic/uming.ttc",             # AR PL UMing
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",        # DejaVu Sans
+                "/System/Library/Fonts/Arial.ttf",                        # macOS Arial
+                "C:/Windows/Fonts/arial.ttf",                             # Windows Arial
+            ]
+            
+            for font_path in font_paths:
+                try:
+                    if os.path.exists(font_path):
+                        font = ImageFont.truetype(font_path, font_size)
+                        print(f"成功加载字体: {font_path}")
+                        break
+                except Exception as e:
+                    print(f"加载字体失败 {font_path}: {e}")
+                    continue
+            
+            # 如果所有字体都加载失败，使用默认字体
+            if font is None:
+                print("使用默认字体")
+                font = ImageFont.load_default()
+            
+            # 绘制文字
+            draw.text(position, text, font=font, fill=color)
+            
+            # 转换回OpenCV格式
+            image_bgr = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+            return image_bgr
+            
+        except Exception as e:
+            print(f"绘制中文文字失败: {str(e)}")
+            # 如果失败，使用OpenCV的英文文字
+            cv2.putText(image, text, position, cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+            return image
+
+    def _resize_image_for_word(self, image: np.ndarray, target_width: int = 800) -> np.ndarray:
+        """
+        调整图片尺寸适合Word文档
+        
+        Args:
+            image: 输入图像
+            target_width: 目标宽度（像素）
+            
+        Returns:
+            np.ndarray: 调整后的图像
+        """
+        height, width = image.shape[:2]
+        
+        # 计算缩放比例
+        scale = target_width / width
+        
+        # 计算新的高度
+        new_height = int(height * scale)
+        
+        # 调整图片尺寸
+        resized_image = cv2.resize(image, (target_width, new_height), interpolation=cv2.INTER_AREA)
+        
+        return resized_image
+
+    def generate_keyframe_images(self, analysis_results: Dict[str, Any], video_paths: Dict[str, str], 
+                               analysis_dir: str, shoulder_selection: str = 'left') -> Dict[str, str]:
+        """
+        生成关键帧图片
+        
+        Args:
+            analysis_results: 分析结果字典
+            video_paths: 视频文件路径字典
+            analysis_dir: 分析结果保存目录
+            shoulder_selection: 肩部选择，'left'表示左肩，'right'表示右肩
+            
+        Returns:
+            Dict[str, str]: 生成的图片路径字典
+        """
+        keyframe_paths = {}
+        
+        try:
+            # 1. 生成最大外展角角度视图（正面视频）
+            if 'front' in analysis_results and analysis_results['front'] and 'front' in video_paths:
+                front_result = analysis_results['front']
+                front_video_path = video_paths['front']
+                
+                if front_result.get('angle_data') and os.path.exists(front_video_path):
+                    keyframe_path = self._generate_max_abduction_image(
+                        front_result, front_video_path, analysis_dir
+                    )
+                    if keyframe_path:
+                        keyframe_paths['max_abduction_image'] = keyframe_path
+            
+            # 2. 生成最大前屈角角度视图（侧面视频）
+            if 'side' in analysis_results and analysis_results['side'] and 'side' in video_paths:
+                side_result = analysis_results['side']
+                side_video_path = video_paths['side']
+                
+                if side_result.get('angle_data') and os.path.exists(side_video_path):
+                    keyframe_path = self._generate_max_flexion_image(
+                        side_result, side_video_path, analysis_dir, shoulder_selection
+                    )
+                    if keyframe_path:
+                        keyframe_paths['max_flexion_image'] = keyframe_path
+            
+            # 3. 生成左右腕部最大高度比图（背面视频）
+            if 'back' in analysis_results and analysis_results['back'] and 'back' in video_paths:
+                back_result = analysis_results['back']
+                back_video_path = video_paths['back']
+                
+                if back_result.get('wrist_height_data') and os.path.exists(back_video_path):
+                    keyframe_path = self._generate_max_wrist_height_image(
+                        back_result, back_video_path, analysis_dir
+                    )
+                    if keyframe_path:
+                        keyframe_paths['max_wrist_height_image'] = keyframe_path
+                        
+        except Exception as e:
+            print(f"生成关键帧图片时出错: {str(e)}")
+        
+        return keyframe_paths
+    
+    def _generate_max_abduction_image(self, front_result: Dict[str, Any], 
+                                    video_path: str, analysis_dir: str) -> Optional[str]:
+        """
+        生成最大外展角角度视图
+        
+        Args:
+            front_result: 正面分析结果
+            video_path: 正面视频路径
+            analysis_dir: 分析结果目录
+            
+        Returns:
+            Optional[str]: 生成的图片路径
+        """
+        try:
+            angle_data = front_result['angle_data']
+            fps = front_result.get('fps', 30)
+            analysis_start_time = front_result.get('analysis_start_time', 0)
+            
+            # 在后50%的帧数里找最大外展角
+            half_length = len(angle_data) // 2
+            second_half_data = angle_data[half_length:]
+            
+            # 找到左右肩最大外展角对应的帧
+            left_max_frame = max(second_half_data, key=lambda x: x['left_angle'])
+            right_max_frame = max(second_half_data, key=lambda x: x['right_angle'])
+            
+            # 计算在原始视频中的帧号
+            left_max_frame_num = int(analysis_start_time * fps + left_max_frame['frame'] - 1)
+            right_max_frame_num = int(analysis_start_time * fps + right_max_frame['frame'] - 1)
+            
+            # 从原始视频中提取对应帧
+            cap = cv2.VideoCapture(video_path)
+            
+            # 提取左肩最大外展角帧
+            cap.set(cv2.CAP_PROP_POS_FRAMES, left_max_frame_num)
+            ret, left_frame = cap.read()
+            
+            # 提取右肩最大外展角帧
+            cap.set(cv2.CAP_PROP_POS_FRAMES, right_max_frame_num)
+            ret, right_frame = cap.read()
+            
+            cap.release()
+            
+            if left_frame is not None and right_frame is not None:
+                # 组合左右帧
+                height, width = left_frame.shape[:2]
+                combined_frame = np.zeros((height, width * 2, 3), dtype=np.uint8)
+                combined_frame[:, :width] = left_frame
+                combined_frame[:, width:] = right_frame
+                
+                # 添加文字标注
+                combined_frame = self._draw_chinese_text(combined_frame, f"左肩最大外展角: {left_max_frame['left_angle']:.1f}°", (10, 30))
+                combined_frame = self._draw_chinese_text(combined_frame, f"右肩最大外展角: {right_max_frame['right_angle']:.1f}°", (width + 10, 30))
+                
+                # 调整图片尺寸适合Word文档
+                combined_frame = self._resize_image_for_word(combined_frame, target_width=800)
+                
+                # 保存图片
+                output_path = os.path.join(analysis_dir, "max_abduction_angles.png")
+                cv2.imwrite(output_path, combined_frame)
+                print(f"最大外展角角度视图已保存: {output_path}")
+                return output_path
+                
+        except Exception as e:
+            print(f"生成最大外展角角度视图失败: {str(e)}")
+        
+        return None
+    
+    def _generate_max_flexion_image(self, side_result: Dict[str, Any], 
+                                  video_path: str, analysis_dir: str, 
+                                  shoulder_selection: str) -> Optional[str]:
+        """
+        生成最大前屈角角度视图
+        
+        Args:
+            side_result: 侧面分析结果
+            video_path: 侧面视频路径
+            analysis_dir: 分析结果目录
+            shoulder_selection: 肩部选择
+            
+        Returns:
+            Optional[str]: 生成的图片路径
+        """
+        try:
+            angle_data = side_result['angle_data']
+            fps = side_result.get('fps', 30)
+            analysis_start_time = side_result.get('analysis_start_time', 0)
+            
+            # 在后50%的帧数里找最大前屈角
+            half_length = len(angle_data) // 2
+            second_half_data = angle_data[half_length:]
+            
+            # 根据肩部选择找到对应的最大前屈角
+            if shoulder_selection == 'left':
+                max_frame = max(second_half_data, key=lambda x: x['left_angle'])
+                max_angle = max_frame['left_angle']
+                angle_key = 'left_angle'
+            else:  # right
+                max_frame = max(second_half_data, key=lambda x: x['right_angle'])
+                max_angle = max_frame['right_angle']
+                angle_key = 'right_angle'
+            
+            # 计算在原始视频中的帧号
+            max_frame_num = int(analysis_start_time * fps + max_frame['frame'] - 1)
+            
+            # 从原始视频中提取对应帧
+            cap = cv2.VideoCapture(video_path)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, max_frame_num)
+            ret, frame = cap.read()
+            cap.release()
+            
+            if frame is not None:
+                # 添加文字标注
+                shoulder_text = "左肩" if shoulder_selection == 'left' else "右肩"
+                frame = self._draw_chinese_text(frame, f"{shoulder_text}最大前屈角: {max_angle:.1f}°", (10, 30))
+                
+                # 调整图片尺寸适合Word文档
+                frame = self._resize_image_for_word(frame, target_width=300)
+                
+                # 保存图片
+                output_path = os.path.join(analysis_dir, "max_flexion_angle.png")
+                cv2.imwrite(output_path, frame)
+                print(f"最大前屈角角度视图已保存: {output_path}")
+                return output_path
+                
+        except Exception as e:
+            print(f"生成最大前屈角角度视图失败: {str(e)}")
+        
+        return None
+    
+    def _generate_max_wrist_height_image(self, back_result: Dict[str, Any], 
+                                       video_path: str, analysis_dir: str) -> Optional[str]:
+        """
+        生成左右腕部最大高度比图
+        
+        Args:
+            back_result: 背面分析结果
+            video_path: 背面视频路径
+            analysis_dir: 分析结果目录
+            
+        Returns:
+            Optional[str]: 生成的图片路径
+        """
+        try:
+            wrist_height_data = back_result['wrist_height_data']
+            fps = back_result.get('fps', 30)
+            analysis_start_time = back_result.get('analysis_start_time', 0)
+            
+            # 在后50%的帧数里找最大腕部高度
+            half_length = len(wrist_height_data) // 2
+            second_half_data = wrist_height_data[half_length:]
+            
+            # 找到左右腕最大高度对应的帧
+            left_max_frame = max(second_half_data, key=lambda x: x['left_wrist_height'])
+            right_max_frame = max(second_half_data, key=lambda x: x['right_wrist_height'])
+            
+            # 计算在原始视频中的帧号
+            left_max_frame_num = int(analysis_start_time * fps + left_max_frame['frame'] - 1)
+            right_max_frame_num = int(analysis_start_time * fps + right_max_frame['frame'] - 1)
+            
+            # 从原始视频中提取对应帧
+            cap = cv2.VideoCapture(video_path)
+            
+            # 提取左腕最大高度帧
+            cap.set(cv2.CAP_PROP_POS_FRAMES, left_max_frame_num)
+            ret, left_frame = cap.read()
+            
+            # 提取右腕最大高度帧
+            cap.set(cv2.CAP_PROP_POS_FRAMES, right_max_frame_num)
+            ret, right_frame = cap.read()
+            
+            cap.release()
+            
+            if left_frame is not None and right_frame is not None:
+                # 组合左右帧
+                height, width = left_frame.shape[:2]
+                combined_frame = np.zeros((height, width * 2, 3), dtype=np.uint8)
+                combined_frame[:, :width] = left_frame
+                combined_frame[:, width:] = right_frame
+                
+                # 添加文字标注
+                combined_frame = self._draw_chinese_text(combined_frame, f"左腕最大高度: {left_max_frame['left_wrist_height']:.2f}", (10, 30))
+                combined_frame = self._draw_chinese_text(combined_frame, f"右腕最大高度: {right_max_frame['right_wrist_height']:.2f}", (width + 10, 30))
+                
+                # 调整图片尺寸适合Word文档
+                combined_frame = self._resize_image_for_word(combined_frame, target_width=800)
+                
+                # 保存图片
+                output_path = os.path.join(analysis_dir, "max_wrist_heights.png")
+                cv2.imwrite(output_path, combined_frame)
+                print(f"左右腕部最大高度比图已保存: {output_path}")
+                return output_path
+                
+        except Exception as e:
+            print(f"生成左右腕部最大高度比图失败: {str(e)}")
+        
+        return None
