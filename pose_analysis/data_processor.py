@@ -76,7 +76,7 @@ class DataProcessor:
     
     def generate_charts(self, analysis_results: Dict[str, Any], patient_name: str, shoulder_selection: str = 'left') -> Dict[str, plt.Figure]:
         """
-        生成分析图表
+        生成分析图表，确保每张图表清晰且适合A4纸打印
         
         Args:
             analysis_results: 分析结果
@@ -87,130 +87,134 @@ class DataProcessor:
             Dict[str, plt.Figure]: 图表字典
         """
         charts = {}
-        
+
+        a4_width, a4_height = 16, 7  # 横向A4
+
         # 处理前视和侧视数据
         for angle in ['front', 'side']:
             if angle in analysis_results and analysis_results[angle]:
                 result = analysis_results[angle]
-                
+
                 if result.get('angle_data'):
                     # 提取数据
                     frames = [d['frame'] for d in result['angle_data']]
                     left_angles = [d['left_angle'] for d in result['angle_data']]
                     right_angles = [d['right_angle'] for d in result['angle_data']]
-                    
+
                     # 获取FPS和时间信息
                     fps = result.get('fps', 30)  # 默认30fps
                     analysis_start_time = result.get('analysis_start_time', 0)
-                    
+
                     # 计算时间轴（秒）
                     times = [(frame - 1) / fps + analysis_start_time for frame in frames]
-                    
+
                     # 应用滤波
                     left_angles_filtered = self.apply_moving_average(left_angles)
                     right_angles_filtered = self.apply_moving_average(right_angles)
-                    
-                    # 生成角度-时间图
-                    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
-                    
+
+                    # 生成角度-时间图，A4横向，dpi高一些保证清晰
+                    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(a4_width, a4_height), dpi=200)
+
                     # 根据肩部选择决定显示哪些曲线
                     if angle == 'side' and shoulder_selection == 'left':
                         # 侧面角度且选择左肩：只显示左肩曲线
                         ax1.plot(times, left_angles_filtered, 'b-', linewidth=2, label='左肩')
-                        ax1.set_xlabel('时间 (秒)')
-                        ax1.set_ylabel('角度 (度)')
-                        ax1.set_title(f'{angle}角度 - 左肩关节角度变化')
-                        ax1.legend()
+                        ax1.set_xlabel('时间 (秒)', fontsize=12)
+                        ax1.set_ylabel('角度 (度)', fontsize=12)
+                        ax1.set_title('侧面角度 - 左肩关节角度变化', fontsize=14)
+                        ax1.legend(fontsize=10)
                         ax1.grid(True, alpha=0.3)
                     elif angle == 'side' and shoulder_selection == 'right':
                         # 侧面角度且选择右肩：只显示右肩曲线
                         ax1.plot(times, right_angles_filtered, 'r-', linewidth=2, label='右肩')
-                        ax1.set_xlabel('时间 (秒)')
-                        ax1.set_ylabel('角度 (度)')
-                        ax1.set_title(f'{angle}角度 - 右肩关节角度变化')
-                        ax1.legend()
+                        ax1.set_xlabel('时间 (秒)', fontsize=12)
+                        ax1.set_ylabel('角度 (度)', fontsize=12)
+                        ax1.set_title('侧面角度 - 右肩关节角度变化', fontsize=14)
+                        ax1.legend(fontsize=10)
                         ax1.grid(True, alpha=0.3)
                     else:
                         # 正面角度或其他情况：显示两条曲线
                         ax1.plot(times, left_angles_filtered, 'b-', linewidth=2, label='左肩')
                         ax1.plot(times, right_angles_filtered, 'r-', linewidth=2, label='右肩')
-                        ax1.set_xlabel('时间 (秒)')
-                        ax1.set_ylabel('角度 (度)')
-                        ax1.set_title(f'{angle}角度 - 肩关节角度变化')
-                        ax1.legend()
+                        ax1.set_xlabel('时间 (秒)', fontsize=12)
+                        ax1.set_ylabel('角度 (度)', fontsize=12)
+                        ax1.set_title('正面角度 - 肩关节角度变化' if angle == 'front' else '侧面角度 - 肩关节角度变化', fontsize=14)
+                        ax1.legend(fontsize=10)
                         ax1.grid(True, alpha=0.3)
-                    
+
                     # 生成角速度-时间图
                     if result.get('velocity_data'):
                         left_velocities = [d['left_velocity'] for d in result['velocity_data']]
                         right_velocities = [d['right_velocity'] for d in result['velocity_data']]
-                        
+
                         # 计算角速度对应的时间轴（角速度数据比角度数据少一帧）
                         velocity_times = [(frame - 1) / fps + analysis_start_time for frame in frames[1:]]
-                        
+
                         if angle == 'side' and shoulder_selection == 'left':
                             # 侧面角度且选择左肩：只显示左肩数据
                             ax2.plot(velocity_times, left_velocities, 'b-', linewidth=2, label='左肩')
-                            ax2.set_xlabel('时间 (秒)')
-                            ax2.set_ylabel('角速度 (度/帧)')
-                            ax2.set_title(f'{angle}角度 - 左肩角速度变化')
-                            ax2.legend()
+                            ax2.set_xlabel('时间 (秒)', fontsize=12)
+                            ax2.set_ylabel('角速度 (度/帧)', fontsize=12)
+                            ax2.set_title('侧面角度 - 左肩角速度变化', fontsize=14)
+                            ax2.legend(fontsize=10)
                             ax2.grid(True, alpha=0.3)
                         elif angle == 'side' and shoulder_selection == 'right':
                             # 侧面角度且选择右肩：只显示右肩数据
                             ax2.plot(velocity_times, right_velocities, 'r-', linewidth=2, label='右肩')
-                            ax2.set_xlabel('时间 (秒)')
-                            ax2.set_ylabel('角速度 (度/帧)')
-                            ax2.set_title(f'{angle}角度 - 右肩角速度变化')
-                            ax2.legend()
+                            ax2.set_xlabel('时间 (秒)', fontsize=12)
+                            ax2.set_ylabel('角速度 (度/帧)', fontsize=12)
+                            ax2.set_title('侧面角度 - 右肩角速度变化', fontsize=14)
+                            ax2.legend(fontsize=10)
                             ax2.grid(True, alpha=0.3)
                         else:
                             # 正面角度或其他情况：显示两条曲线
                             ax2.plot(velocity_times, left_velocities, 'b-', linewidth=2, label='左肩')
                             ax2.plot(velocity_times, right_velocities, 'r-', linewidth=2, label='右肩')
-                            ax2.set_xlabel('时间 (秒)')
-                            ax2.set_ylabel('角速度 (度/帧)')
-                            ax2.set_title(f'{angle}角度 - 角速度变化')
-                            ax2.legend()
+                            ax2.set_xlabel('时间 (秒)', fontsize=12)
+                            ax2.set_ylabel('角速度 (度/帧)', fontsize=12)
+                            ax2.set_title('正面角度 - 角速度变化' if angle == 'front' else '侧面角度 - 角速度变化', fontsize=14)
+                            ax2.legend(fontsize=10)
                             ax2.grid(True, alpha=0.3)
-                    
-                    plt.tight_layout()
+
+                    # 优化子图间距，防止标签重叠
+                    plt.tight_layout(rect=[0, 0, 1, 0.97])
                     # 使用中文文件名
                     angle_name = '正面' if angle == 'front' else '侧面'
                     charts[f'{angle_name}_角度分析'] = fig
-        
+
         # 处理后视数据（手腕高度）
         if 'back' in analysis_results and analysis_results['back']:
             result = analysis_results['back']
-            
+
             if result.get('wrist_height_data'):
                 frames = [d['frame'] for d in result['wrist_height_data']]
                 left_heights = [d['left_wrist_height'] for d in result['wrist_height_data']]
                 right_heights = [d['right_wrist_height'] for d in result['wrist_height_data']]
-                
+
                 # 获取FPS和时间信息
                 fps = result.get('fps', 30)  # 默认30fps
                 analysis_start_time = result.get('analysis_start_time', 0)
-                
+
                 # 计算时间轴（秒）
                 times = [(frame - 1) / fps + analysis_start_time for frame in frames]
-                
+
                 # 应用滤波
                 left_heights_filtered = self.apply_moving_average(left_heights)
                 right_heights_filtered = self.apply_moving_average(right_heights)
-                
-                fig, ax = plt.subplots(figsize=(16, 8))
+
+                # 单图，A4横向，dpi高一些保证清晰
+                fig, ax = plt.subplots(figsize=(a4_width, a4_height), dpi=200)
                 ax.plot(times, left_heights_filtered, 'b-', linewidth=2, label='左腕')
                 ax.plot(times, right_heights_filtered, 'r-', linewidth=2, label='右腕')
-                ax.set_xlabel('时间 (秒)')
-                ax.set_ylabel('高度比例')
-                ax.set_title('后视角度 - 左右腕高度变化')
-                ax.legend()
+                ax.set_xlabel('时间 (秒)', fontsize=12)
+                ax.set_ylabel('高度比例', fontsize=12)
+                ax.set_title('后视角度 - 左右腕高度变化', fontsize=14)
+                ax.legend(fontsize=10)
                 ax.grid(True, alpha=0.3)
-                
-                plt.tight_layout()
+
+                plt.tight_layout(rect=[0, 0, 1, 0.97])
                 charts['背面_手腕高度'] = fig
-        
+
         return charts
     
     def process_analysis_data(self, analysis_results: Dict[str, Any], 

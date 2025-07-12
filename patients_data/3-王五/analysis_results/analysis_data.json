@@ -1,0 +1,88 @@
+{
+  "patient_info": {
+    "id": 3,
+    "name": "王五",
+    "analysis_time": "2025-07-12 16:54:09",
+    "age": 66,
+    "gender": "男",
+    "height": 166.0,
+    "weight": 66.0,
+    "symptoms": "活动受限",
+    "duration": 3,
+    "treatment": "药物",
+    "project": "ai",
+    "fill_person": "fy",
+    "address": "北京"
+  },
+  "front_shoulder_data": {
+    "left_shoulder_data": {
+      "max_angle": 107.0,
+      "min_angle": 41.78,
+      "avg_angle": 83.79,
+      "angle_range": 65.22,
+      "velocity_stages": [
+        11.34,
+        20.53,
+        17.09,
+        0.0
+      ],
+      "max_velocity": 238.69
+    },
+    "right_shoulder_data": {
+      "max_angle": 168.42,
+      "min_angle": 56.79,
+      "avg_angle": 126.38,
+      "angle_range": 111.63,
+      "velocity_stages": [
+        0.0,
+        20.03,
+        23.54,
+        14.93
+      ],
+      "max_velocity": 105.59
+    }
+  },
+  "side_shoulder_data": {
+    "left_shoulder_data": {
+      "max_angle": 114.97,
+      "min_angle": 24.02,
+      "avg_angle": 83.5,
+      "angle_range": 90.95,
+      "velocity_stages": [
+        28.54,
+        16.0,
+        23.44,
+        0.0
+      ],
+      "max_velocity": 219.89
+    },
+    "right_shoulder_data": {
+      "max_angle": 124.96,
+      "min_angle": 20.73,
+      "avg_angle": 77.34,
+      "angle_range": 104.22,
+      "velocity_stages": [
+        75.29,
+        21.49,
+        72.7,
+        0.0
+      ],
+      "max_velocity": 2493.74
+    }
+  },
+  "wrist_data": {
+    "left_max_height": 0.67,
+    "right_max_height": 0.47,
+    "left_avg_height": 0.4,
+    "right_avg_height": 0.28
+  },
+  "summary": {
+    "function_score": 86.9,
+    "function_assessment": "肩关节运动功能正常，活动度良好，无明显异常。",
+    "recommendations": [
+      "继续保持当前运动习惯",
+      "定期进行肩关节保健运动",
+      "注意运动时的正确姿势"
+    ]
+  }
+}

@@ -236,6 +236,11 @@ class ReportGenerator:
         # 小标题
         doc.add_heading('4.角度和角度速度曲线图', level=3)
         # 插入图片,先不用操作
+        # 添加图片
+        try:
+            doc.add_picture(report_data['image_path']['front_shoulder_angle_speed'], width=Inches(6))
+        except:
+            doc.add_paragraph('正面-肩部角度曲线图（图片加载失败）')
 
         # 直接插入分页符
         doc.add_page_break()
@@ -289,6 +294,11 @@ class ReportGenerator:
         # 插入图片,先不用操作
         doc.add_heading('4.角度和角度速度曲线图', level=3)
         # 插入图片,先不用操作
+                # 添加图片
+        try:
+            doc.add_picture(report_data['image_path']['side_shoulder_angle_speed'], width=Inches(6))
+        except:
+            doc.add_paragraph('侧面-肩部角度曲线图（图片加载失败）')
 
         # 直接插入分页符
         doc.add_page_break()
@@ -312,6 +322,11 @@ class ReportGenerator:
 
         doc.add_heading('3.左右腕部高度比例变化曲线图', level=3)
         # 插入图片,先不用操作
+                # 添加图片
+        try:
+            doc.add_picture(report_data['image_path']['back_wrist_height'], width=Inches(6))
+        except:
+            doc.add_paragraph('背面-手腕高度曲线图（图片加载失败）')
 
         # 直接插入分页符
         doc.add_page_break()
