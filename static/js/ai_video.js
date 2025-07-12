@@ -1030,16 +1030,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <button onclick="refreshChart('${path}', this)" class="btn btn-sm btn-outline-warning" title="刷新图表">
                                         <i class="fas fa-sync-alt"></i>
                                     </button>
-                                    <a href="${path}" target="_blank" class="btn btn-sm btn-outline-primary" title="在新窗口打开">
-                                        <i class="fas fa-external-link-alt"></i>
-                                    </a>
+                                    <button onclick="openChartPreview('${path}', '${displayName}')" class="btn btn-sm btn-outline-primary" title="预览图表">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
                                     <button onclick="downloadImage('${path}', '${displayName}.png')" class="btn btn-sm btn-outline-secondary" title="下载图片">
                                         <i class="fas fa-download"></i>
                                     </button>
                                 </div>
                             </div>
                             <div class="chart-container">
-                                <img src="${path}" alt="${displayName}" class="analysis-chart-img" 
+                                <img src="${path}?t=${Date.now()}" alt="${displayName}" class="analysis-chart-img" 
                                      onload="this.parentElement.classList.add('loaded')" 
                                      onerror="this.parentElement.classList.add('error'); this.style.display='none'; this.nextElementSibling.style.display='block';">
                                 <div class="chart-loading" style="display: none;">
@@ -1212,6 +1212,36 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('所有图表已刷新');
         showAlert('所有图表已刷新', 'success');
     }
+
+
+
+    // 打开图表预览模态框
+    window.openChartPreview = function(chartPath, chartName) {
+        const modal = document.getElementById('chartPreviewModal');
+        const image = document.getElementById('chartPreviewImage');
+        const downloadBtn = document.getElementById('downloadChartBtn');
+        
+        if (modal && image) {
+            // 添加时间戳避免缓存
+            const timestamp = new Date().getTime();
+            const newPath = chartPath + '?t=' + timestamp;
+            
+            // 设置图片源
+            image.src = newPath;
+            image.alt = chartName;
+            
+            // 设置下载按钮的点击事件
+            if (downloadBtn) {
+                downloadBtn.onclick = function() {
+                    downloadImage(chartPath, chartName + '.png');
+                };
+            }
+            
+            // 显示模态框
+            const bootstrapModal = new bootstrap.Modal(modal);
+            bootstrapModal.show();
+        }
+    };
 
     function exportResults() {
         if (!currentAnalysisId) {

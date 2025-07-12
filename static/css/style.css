@@ -1767,6 +1767,55 @@ footer {
     }
 }
 
+/* 图表预览模态框样式 */
+.chart-preview-img {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#chartPreviewModal .modal-dialog {
+    max-width: 90vw;
+}
+
+#chartPreviewModal .modal-body {
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+#chartPreviewModal .modal-content {
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+#chartPreviewModal .modal-header {
+    background: linear-gradient(135deg, #007aff, #0056b3);
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+
+#chartPreviewModal .modal-header .btn-close {
+    filter: invert(1);
+}
+
+#chartPreviewModal .modal-footer {
+    background: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+}
+
+@media (max-width: 768px) {
+    #chartPreviewModal .modal-dialog {
+        max-width: 95vw;
+        margin: 10px auto;
+    }
+    
+    .chart-preview-img {
+        max-height: 60vh;
+    }
+}
+
 @media (max-width: 576px) {
     .timeline-control {
         padding: 10px;
@@ -1788,5 +1837,14 @@ footer {
     
     .timeline-duration {
         font-size: 0.75rem;
+    }
+    
+    #chartPreviewModal .modal-dialog {
+        max-width: 98vw;
+        margin: 5px auto;
+    }
+    
+    .chart-preview-img {
+        max-height: 50vh;
     }
 } 

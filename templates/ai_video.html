@@ -720,6 +720,31 @@
     </div>
 </div>
 
+<!-- 图表预览模态框 -->
+<div class="modal fade" id="chartPreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-line me-2"></i>图表预览
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <img id="chartPreviewImage" src="" alt="图表预览" class="img-fluid chart-preview-img">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="downloadChartBtn">
+                    <i class="fas fa-download me-2"></i>下载图片
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 患者创建提示模态框 -->
 <div class="modal fade" id="createPatientPromptModal" tabindex="-1">
     <div class="modal-dialog">

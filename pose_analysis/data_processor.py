@@ -125,7 +125,7 @@ class DataProcessor:
                     right_angles_filtered = self.apply_moving_average(right_angles)
                     
                     # 生成角度-时间图
-                    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+                    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
                     
                     # 根据肩部选择决定显示哪些曲线
                     if angle == 'side' and shoulder_selection == 'left':
@@ -199,46 +199,39 @@ class DataProcessor:
                         left_accelerations = [d['left_acceleration'] for d in result['acceleration_data']]
                         right_accelerations = [d['right_acceleration'] for d in result['acceleration_data']]
                         
-                        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
-                        
-                        if angle == 'side' and shoulder_selection == 'left':
-                            # 侧面角度且选择左肩：只显示左肩数据
+                        # 侧面角度不区分左肩右肩，直接画两个肩的数据
+                        if angle == 'side':
+                            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
+                            # 左肩角度-加速度
                             ax1.scatter(left_angles_filtered[:len(left_accelerations)], left_accelerations, 
-                                      c='purple', alpha=0.6, label='左肩')
+                                        c='purple', alpha=0.6, label='左肩')
                             ax1.set_xlabel('角度 (度)')
                             ax1.set_ylabel('角加速度 (度/帧²)')
                             ax1.set_title(f'{angle}角度 - 左肩角度-加速度分布')
                             ax1.legend()
                             ax1.grid(True, alpha=0.3)
-                            
-                            # 隐藏右肩图表
-                            ax2.set_visible(False)
-                        elif angle == 'side' and shoulder_selection == 'right':
-                            # 侧面角度且选择右肩：只显示右肩数据
+                            # 右肩角度-加速度
                             ax2.scatter(right_angles_filtered[:len(right_accelerations)], right_accelerations, 
-                                      c='brown', alpha=0.6, label='右肩')
+                                        c='brown', alpha=0.6, label='右肩')
                             ax2.set_xlabel('角度 (度)')
                             ax2.set_ylabel('角加速度 (度/帧²)')
                             ax2.set_title(f'{angle}角度 - 右肩角度-加速度分布')
                             ax2.legend()
                             ax2.grid(True, alpha=0.3)
-                            
-                            # 隐藏左肩图表
-                            ax1.set_visible(False)
                         else:
                             # 正面角度或其他情况：显示两个图表
+                            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
                             # 左肩角度-加速度
                             ax1.scatter(left_angles_filtered[:len(left_accelerations)], left_accelerations, 
-                                      c='purple', alpha=0.6, label='左肩')
+                                        c='purple', alpha=0.6, label='左肩')
                             ax1.set_xlabel('角度 (度)')
                             ax1.set_ylabel('角加速度 (度/帧²)')
                             ax1.set_title(f'{angle}角度 - 左肩角度-加速度分布')
                             ax1.legend()
                             ax1.grid(True, alpha=0.3)
-                            
                             # 右肩角度-加速度
                             ax2.scatter(right_angles_filtered[:len(right_accelerations)], right_accelerations, 
-                                      c='brown', alpha=0.6, label='右肩')
+                                        c='brown', alpha=0.6, label='右肩')
                             ax2.set_xlabel('角度 (度)')
                             ax2.set_ylabel('角加速度 (度/帧²)')
                             ax2.set_title(f'{angle}角度 - 右肩角度-加速度分布')
@@ -263,7 +256,7 @@ class DataProcessor:
                 left_heights_filtered = self.apply_moving_average(left_heights)
                 right_heights_filtered = self.apply_moving_average(right_heights)
                 
-                fig, ax = plt.subplots(figsize=(12, 6))
+                fig, ax = plt.subplots(figsize=(16, 8))
                 ax.plot(frames, left_heights_filtered, 'b-', linewidth=2, label='左腕')
                 ax.plot(frames, right_heights_filtered, 'r-', linewidth=2, label='右腕')
                 ax.set_xlabel('帧数')
