@@ -175,7 +175,9 @@ class PoseDetector:
     def calculate_side_shoulder_angle(self, frame: np.ndarray, keypoints: torch.Tensor, 
                                     show_angle: bool = False) -> Tuple[float, float]:
         """
-        计算侧面肩关节角度（与正面相同）
+        计算侧面肩关节角度（前屈运动）
+        前屈运动：计算肩关节相对于躯干的前屈角度
+        角度定义：髋关节-肩关节-肘关节的角度
         
         Args:
             frame: 输入图像
@@ -185,7 +187,26 @@ class PoseDetector:
         Returns:
             Tuple[float, float]: 左肩角度, 右肩角度
         """
-        return self.calculate_front_shoulder_angle(frame, keypoints, show_angle)
+        for k in keypoints:
+            # 左肩前屈角度计算：髋关节-肩关节-肘关节
+            left_hip = k[self.keypoints_dict['Left Hip']].cpu().numpy()
+            left_shoulder = k[self.keypoints_dict['Left Shoulder']].cpu().numpy()
+            left_elbow = k[self.keypoints_dict['Left Elbow']].cpu().numpy()
+            left_angle = self.estimate_pose_angle(left_hip, left_shoulder, left_elbow)
+            
+            # 右肩前屈角度计算：髋关节-肩关节-肘关节
+            right_hip = k[self.keypoints_dict['Right Hip']].cpu().numpy()
+            right_shoulder = k[self.keypoints_dict['Right Shoulder']].cpu().numpy()
+            right_elbow = k[self.keypoints_dict['Right Elbow']].cpu().numpy()
+            right_angle = self.estimate_pose_angle(right_hip, right_shoulder, right_elbow)
+            
+            if show_angle:
+                self.plot_angle(frame, left_angle, left_shoulder)
+                self.plot_angle(frame, right_angle, right_shoulder)
+            
+            return left_angle, right_angle
+        
+        return 0.0, 0.0
     
     def calculate_wrist_distance(self, frame: np.ndarray, keypoints: torch.Tensor, 
                                show_distance: bool = True) -> Tuple[float, float]:

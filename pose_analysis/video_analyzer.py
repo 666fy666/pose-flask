@@ -143,7 +143,7 @@ class VideoAnalyzer:
         
         # 计算速度
         if angle in ["front", "side"] and angle_data:
-            velocity_data = self.data_processor.calculate_velocity(angle_data)
+            velocity_data = self.data_processor.calculate_velocity(angle_data, fps)
         
         # 整理分析结果
         analysis_result = {
@@ -264,7 +264,7 @@ class VideoAnalyzer:
         
         # 生成Word报告
         report_path = self.report_generator.generate_report(
-            report_data, reports_dir, patient_name
+            report_data, reports_dir, patient_name, shoulder_selection
         )
         
         # 保存标注后的视频

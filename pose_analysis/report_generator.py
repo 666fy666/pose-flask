@@ -19,7 +19,7 @@ class ReportGenerator:
         pass
     
     def generate_report(self, report_data: Dict[str, Any], output_dir: str, 
-                       patient_name: str) -> str:
+                       patient_name: str, shoulder_selection: str = 'left') -> str:
         """
         生成Word格式的分析报告
         
@@ -27,29 +27,31 @@ class ReportGenerator:
             report_data: 报告数据
             output_dir: 输出目录
             patient_name: 患者姓名
+            shoulder_selection: 肩部选择，'left'表示左肩，'right'表示右肩
             
         Returns:
             str: 报告文件路径
         """
         # 准备报告数据
-        formatted_data = self._prepare_report_data(report_data, patient_name, output_dir)
+        formatted_data = self._prepare_report_data(report_data, patient_name, output_dir, shoulder_selection)
         
         # 创建Word报告
-        file_path, file_name = self._create_word_report(formatted_data, output_dir, patient_name)
+        file_path, file_name = self._create_word_report(formatted_data, output_dir, patient_name, shoulder_selection)
         
         return file_path
     
-    def _prepare_report_data(self, report_data: Dict[str, Any], patient_name: str, output_dir: str) -> Dict[str, Any]:
+    def _prepare_report_data(self, report_data: Dict[str, Any], patient_name: str, output_dir: str, shoulder_selection: str = 'left') -> Dict[str, Any]:
         """
         准备报告数据，按照模板格式组织
         
-                 Args:
-             report_data: 原始报告数据
-             patient_name: 患者姓名
-             output_dir: 输出目录
-             
-         Returns:
-             Dict[str, Any]: 格式化的报告数据
+        Args:
+            report_data: 原始报告数据
+            patient_name: 患者姓名
+            output_dir: 输出目录
+            shoulder_selection: 肩部选择，'left'表示左肩，'right'表示右肩
+            
+        Returns:
+            Dict[str, Any]: 格式化的报告数据
         """
         # 获取患者基本信息
         patient_info = report_data.get('patient_info', {})
@@ -57,9 +59,15 @@ class ReportGenerator:
         # 获取分析结果
         summary = report_data.get('summary', {})
         
-        # 获取肩部数据
-        left_shoulder_data = report_data.get('left_shoulder_data', {})
-        right_shoulder_data = report_data.get('right_shoulder_data', {})
+        # 获取前视肩部数据（外展运动）
+        front_shoulder_data = report_data.get('front_shoulder_data', {})
+        front_left_data = front_shoulder_data.get('left_shoulder_data', {})
+        front_right_data = front_shoulder_data.get('right_shoulder_data', {})
+        
+        # 获取侧视肩部数据（前屈运动）
+        side_shoulder_data = report_data.get('side_shoulder_data', {})
+        side_left_data = side_shoulder_data.get('left_shoulder_data', {})
+        side_right_data = side_shoulder_data.get('right_shoulder_data', {})
         
         # 获取腕部数据
         wrist_data = report_data.get('wrist_data', {})
@@ -73,19 +81,37 @@ class ReportGenerator:
             "weight": patient_info.get('weight', 0)
         }
         
-        # 准备左肩部角度数据
-        left_shoulder_angle_data = {
-            "angle_speed": left_shoulder_data.get('velocity_stages', [0, 0, 0, 0]),
-            "max_angle": left_shoulder_data.get('max_angle', 0),
-            "max_angle_speed": left_shoulder_data.get('max_velocity', 0)
+        # 准备前视左肩部角度数据
+        front_left_shoulder_data = {
+            "angle_speed": front_left_data.get('velocity_stages', [0, 0, 0, 0]),
+            "max_angle": front_left_data.get('max_angle', 0),
+            "max_angle_speed": front_left_data.get('max_velocity', 0)
         }
         
-        # 准备右肩部角度数据
-        right_shoulder_angle_data = {
-            "angle_speed": right_shoulder_data.get('velocity_stages', [0, 0, 0, 0]),
-            "max_angle": right_shoulder_data.get('max_angle', 0),
-            "max_angle_speed": right_shoulder_data.get('max_velocity', 0)
+        # 准备前视右肩部角度数据
+        front_right_shoulder_data = {
+            "angle_speed": front_right_data.get('velocity_stages', [0, 0, 0, 0]),
+            "max_angle": front_right_data.get('max_angle', 0),
+            "max_angle_speed": front_right_data.get('max_velocity', 0)
         }
+        
+        # 根据肩部选择准备侧视数据
+        if shoulder_selection == 'left':
+            # 选择左肩，只准备左肩数据
+            side_selected_shoulder_data = {
+                "angle_speed": side_left_data.get('velocity_stages', [0, 0, 0, 0]),
+                "max_angle": side_left_data.get('max_angle', 0),
+                "max_angle_speed": side_left_data.get('max_velocity', 0),
+                "shoulder_name": "左肩"
+            }
+        else:
+            # 选择右肩，只准备右肩数据
+            side_selected_shoulder_data = {
+                "angle_speed": side_right_data.get('velocity_stages', [0, 0, 0, 0]),
+                "max_angle": side_right_data.get('max_angle', 0),
+                "max_angle_speed": side_right_data.get('max_velocity', 0),
+                "shoulder_name": "右肩"
+            }
         
         # 准备腕部关节数据
         wrist_joint_data = {
@@ -110,14 +136,15 @@ class ReportGenerator:
         # 返回格式化的数据
         return {
             "base_info": base_info,
-            "left_shoulder_angle_data": left_shoulder_angle_data,
-            "right_shoulder_angle_data": right_shoulder_angle_data,
+            "front_left_shoulder_data": front_left_shoulder_data,
+            "front_right_shoulder_data": front_right_shoulder_data,
+            "side_selected_shoulder_data": side_selected_shoulder_data,
             "wrist_joint_data": wrist_joint_data,
             "image_path": image_path,
             "result_report": result_report
         }
     
-    def _create_word_report(self, report_data: Dict[str, Any], output_dir: str, patient_name: str) -> Tuple[str, str]:
+    def _create_word_report(self, report_data: Dict[str, Any], output_dir: str, patient_name: str, shoulder_selection: str = 'left') -> Tuple[str, str]:
         """
         创建Word报告
         
@@ -125,6 +152,7 @@ class ReportGenerator:
             report_data: 格式化的报告数据
             output_dir: 输出目录
             patient_name: 患者姓名
+            shoulder_selection: 肩部选择，'left'表示左肩，'right'表示右肩
             
         Returns:
             Tuple[str, str]: (文件路径, 文件名)
@@ -162,8 +190,8 @@ class ReportGenerator:
         # 列名分别为：项目、0~45°、45~90°、90~135°、135~180°
         # 肩部角度数据list,用于填充表格
         
-        temp_list = [['左肩平均角速度°/s'] + [str(x) for x in report_data['left_shoulder_angle_data']['angle_speed']],
-                     ['右肩平均角速度°/s'] + [str(x) for x in report_data['right_shoulder_angle_data']['angle_speed']]]
+        temp_list = [['左肩平均角速度°/s'] + [str(x) for x in report_data['front_left_shoulder_data']['angle_speed']],
+                     ['右肩平均角速度°/s'] + [str(x) for x in report_data['front_right_shoulder_data']['angle_speed']]]
     
         table = doc.add_table(rows=1, cols=5)  # 只创建标题行
         hdr_cells = table.rows[0].cells
@@ -193,13 +221,13 @@ class ReportGenerator:
         # 左肩数据
         left_cells = table.rows[1].cells
         left_cells[0].text = '左肩'
-        left_cells[1].text = str(report_data['left_shoulder_angle_data']['max_angle'])
-        left_cells[2].text = str(report_data['left_shoulder_angle_data']['max_angle_speed'])
+        left_cells[1].text = str(report_data['front_left_shoulder_data']['max_angle'])
+        left_cells[2].text = str(report_data['front_left_shoulder_data']['max_angle_speed'])
         # 右肩数据
         right_cells = table.rows[2].cells
         right_cells[0].text = '右肩'
-        right_cells[1].text = str(report_data['right_shoulder_angle_data']['max_angle'])
-        right_cells[2].text = str(report_data['right_shoulder_angle_data']['max_angle_speed'])
+        right_cells[1].text = str(report_data['front_right_shoulder_data']['max_angle'])
+        right_cells[2].text = str(report_data['front_right_shoulder_data']['max_angle_speed'])
 
         # 小标题
         doc.add_heading('3.最大外展角角度视图', level=3)
@@ -218,6 +246,14 @@ class ReportGenerator:
         # 角度范围	0~45°	45~90°	90~135°	135~180°
         # 平均角速度°/s	3.25	3.03	3.18	2.61
         doc.add_heading('1.平均角速度', level=3)
+        
+        # 获取选择的肩部数据
+        selected_shoulder_data = report_data['side_selected_shoulder_data']
+        shoulder_name = selected_shoulder_data['shoulder_name']
+        
+        # 准备侧视数据列表（只显示选择的肩部）
+        side_temp_list = [[f'{shoulder_name}平均角速度°/s'] + [str(x) for x in selected_shoulder_data['angle_speed']]]
+        
         table = doc.add_table(rows=1, cols=5)
         hdr_cells = table.rows[0].cells
         hdr_cells[0].text = '角度范围'
@@ -226,25 +262,30 @@ class ReportGenerator:
         hdr_cells[3].text = '90~135°'
         hdr_cells[4].text = '135~180°'
         # 添加数据
-        for i in range(len(temp_list)):
+        for i in range(len(side_temp_list)):
             row_cells = table.add_row().cells  # 为每个数据行添加一行
-            row_cells[0].text = temp_list[i][0]
-            row_cells[1].text = temp_list[i][1]
-            row_cells[2].text = temp_list[i][2]
-            row_cells[3].text = temp_list[i][3]
-            row_cells[4].text = temp_list[i][4]
+            row_cells[0].text = side_temp_list[i][0]
+            row_cells[1].text = side_temp_list[i][1]
+            row_cells[2].text = side_temp_list[i][2]
+            row_cells[3].text = side_temp_list[i][3]
+            row_cells[4].text = side_temp_list[i][4]
 
-        doc.add_heading('2.最大外展角度信息', level=3)
+        doc.add_heading('2.最大前屈角度信息', level=3)
         # 角度信息	最大角度	最大角速度
         # 外侧肩(就是前端网页选择的那个左侧还是右侧,只需要这个就行)		
-        # 创建表格，2行3列
+        # 创建表格，2行3列（只显示选择的肩部）
         table = doc.add_table(rows=2, cols=3)
         hdr_cells = table.rows[0].cells
         hdr_cells[0].text = '角度信息'
         hdr_cells[1].text = '最大角度'
         hdr_cells[2].text = '最大角速度'
+        # 选择的肩部数据
+        selected_cells = table.rows[1].cells
+        selected_cells[0].text = shoulder_name
+        selected_cells[1].text = str(selected_shoulder_data['max_angle'])
+        selected_cells[2].text = str(selected_shoulder_data['max_angle_speed'])
 
-        doc.add_heading('3.最大外展角角度视图', level=3)
+        doc.add_heading('3.最大前屈角角度视图', level=3)
         # 插入图片,先不用操作
         doc.add_heading('4.角度和角度速度曲线图', level=3)
         # 插入图片,先不用操作

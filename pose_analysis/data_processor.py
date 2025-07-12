@@ -19,15 +19,16 @@ class DataProcessor:
         # 设置中文字体支持
         setup_chinese_font()
     
-    def calculate_velocity(self, angle_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def calculate_velocity(self, angle_data: List[Dict[str, Any]], fps: float = 30.0) -> List[Dict[str, Any]]:
         """
-        计算角速度
+        计算角速度（度/秒）
         
         Args:
             angle_data: 角度数据列表
+            fps: 视频帧率，默认30fps
             
         Returns:
-            List[Dict[str, Any]]: 速度数据列表
+            List[Dict[str, Any]]: 速度数据列表（度/秒）
         """
         velocity_data = []
         
@@ -35,8 +36,13 @@ class DataProcessor:
             prev_frame = angle_data[i-1]
             curr_frame = angle_data[i]
             
-            left_velocity = curr_frame['left_angle'] - prev_frame['left_angle']
-            right_velocity = curr_frame['right_angle'] - prev_frame['right_angle']
+            # 计算度/帧
+            left_velocity_per_frame = curr_frame['left_angle'] - prev_frame['left_angle']
+            right_velocity_per_frame = curr_frame['right_angle'] - prev_frame['right_angle']
+            
+            # 转换为度/秒
+            left_velocity = left_velocity_per_frame * fps
+            right_velocity = right_velocity_per_frame * fps
             
             velocity_data.append({
                 'frame': curr_frame['frame'],
@@ -209,7 +215,7 @@ class DataProcessor:
     
     def process_analysis_data(self, analysis_results: Dict[str, Any], 
                             patient_name: str, patient_id: int, 
-                            patient_info: Dict[str, Any] = None) -> Dict[str, Any]:
+                            patient_info: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         处理分析数据，生成报告所需的数据结构
         
@@ -246,69 +252,161 @@ class DataProcessor:
         
         processed_data = {
             'patient_info': base_patient_info,
-            'left_shoulder_data': {},
-            'right_shoulder_data': {},
+            'front_shoulder_data': {},  # 前视肩部数据
+            'side_shoulder_data': {},   # 侧视肩部数据
             'wrist_data': {},
             'summary': {}
         }
         
-        # 处理侧视数据（主要分析数据）
-        if 'side' in analysis_results and analysis_results['side']:
-            result = analysis_results['side']
-            
-            if result.get('angle_data'):
-                left_angles = [d['left_angle'] for d in result['angle_data']]
-                right_angles = [d['right_angle'] for d in result['angle_data']]
-                
-                # 左肩数据
-                processed_data['left_shoulder_data'] = {
-                    'max_angle': round(max(left_angles), 2),
-                    'min_angle': round(min(left_angles), 2),
-                    'avg_angle': round(np.mean(left_angles), 2),
-                    'angle_range': round(max(left_angles) - min(left_angles), 2)
-                }
-                
-                # 右肩数据
-                processed_data['right_shoulder_data'] = {
-                    'max_angle': round(max(right_angles), 2),
-                    'min_angle': round(min(right_angles), 2),
-                    'avg_angle': round(np.mean(right_angles), 2),
-                    'angle_range': round(max(right_angles) - min(right_angles), 2)
-                }
-                
-                # 计算速度数据
-                if result.get('velocity_data'):
-                    left_velocities = [d['left_velocity'] for d in result['velocity_data']]
-                    right_velocities = [d['right_velocity'] for d in result['velocity_data']]
-                    
-                    # 分阶段速度数据（0-45°, 45-90°, 90-135°, 135-180°）
-                    left_velocity_stages = self.calculate_stage_velocities(left_angles, left_velocities)
-                    right_velocity_stages = self.calculate_stage_velocities(right_angles, right_velocities)
-                    
-                    processed_data['left_shoulder_data']['velocity_stages'] = left_velocity_stages
-                    processed_data['right_shoulder_data']['velocity_stages'] = right_velocity_stages
-                    processed_data['left_shoulder_data']['max_velocity'] = round(max(abs(v) for v in left_velocities), 2)
-                    processed_data['right_shoulder_data']['max_velocity'] = round(max(abs(v) for v in right_velocities), 2)
+        # 处理前视数据（外展运动）
+        if 'front' in analysis_results and analysis_results['front']:
+            processed_data['front_shoulder_data'] = self._process_front_shoulder_data(
+                analysis_results['front']
+            )
         
-        # 处理后视数据
+        # 处理侧视数据（前屈运动）
+        if 'side' in analysis_results and analysis_results['side']:
+            processed_data['side_shoulder_data'] = self._process_side_shoulder_data(
+                analysis_results['side']
+            )
+        
+        # 处理后视数据（手腕高度）
         if 'back' in analysis_results and analysis_results['back']:
-            result = analysis_results['back']
-            
-            if result.get('wrist_height_data'):
-                left_heights = [d['left_wrist_height'] for d in result['wrist_height_data']]
-                right_heights = [d['right_wrist_height'] for d in result['wrist_height_data']]
-                
-                processed_data['wrist_data'] = {
-                    'left_max_height': round(max(left_heights), 2),
-                    'right_max_height': round(max(right_heights), 2),
-                    'left_avg_height': round(np.mean(left_heights), 2),
-                    'right_avg_height': round(np.mean(right_heights), 2)
-                }
+            processed_data['wrist_data'] = self._process_wrist_data(
+                analysis_results['back']
+            )
         
         # 生成综合评估
         processed_data['summary'] = self.generate_summary(processed_data)
         
         return processed_data
+    
+    def _process_front_shoulder_data(self, front_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        处理前视肩部数据（外展运动）
+        
+        Args:
+            front_result: 前视分析结果
+            
+        Returns:
+            Dict[str, Any]: 处理后的前视肩部数据
+        """
+        front_data = {
+            'left_shoulder_data': {},
+            'right_shoulder_data': {}
+        }
+        
+        if front_result.get('angle_data'):
+            left_angles = [d['left_angle'] for d in front_result['angle_data']]
+            right_angles = [d['right_angle'] for d in front_result['angle_data']]
+            
+            # 左肩数据
+            front_data['left_shoulder_data'] = {
+                'max_angle': round(max(left_angles), 2),
+                'min_angle': round(min(left_angles), 2),
+                'avg_angle': round(np.mean(left_angles), 2),
+                'angle_range': round(max(left_angles) - min(left_angles), 2)
+            }
+            
+            # 右肩数据
+            front_data['right_shoulder_data'] = {
+                'max_angle': round(max(right_angles), 2),
+                'min_angle': round(min(right_angles), 2),
+                'avg_angle': round(np.mean(right_angles), 2),
+                'angle_range': round(max(right_angles) - min(right_angles), 2)
+            }
+            
+            # 计算速度数据
+            if front_result.get('velocity_data'):
+                left_velocities = [d['left_velocity'] for d in front_result['velocity_data']]
+                right_velocities = [d['right_velocity'] for d in front_result['velocity_data']]
+                
+                # 分阶段速度数据（0-45°, 45-90°, 90-135°, 135-180°）
+                left_velocity_stages = self.calculate_stage_velocities(left_angles, left_velocities)
+                right_velocity_stages = self.calculate_stage_velocities(right_angles, right_velocities)
+                
+                front_data['left_shoulder_data']['velocity_stages'] = left_velocity_stages
+                front_data['right_shoulder_data']['velocity_stages'] = right_velocity_stages
+                front_data['left_shoulder_data']['max_velocity'] = round(max(abs(v) for v in left_velocities), 2)
+                front_data['right_shoulder_data']['max_velocity'] = round(max(abs(v) for v in right_velocities), 2)
+        
+        return front_data
+    
+    def _process_side_shoulder_data(self, side_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        处理侧视肩部数据（前屈运动）
+        
+        Args:
+            side_result: 侧视分析结果
+            
+        Returns:
+            Dict[str, Any]: 处理后的侧视肩部数据
+        """
+        side_data = {
+            'left_shoulder_data': {},
+            'right_shoulder_data': {}
+        }
+        
+        if side_result.get('angle_data'):
+            left_angles = [d['left_angle'] for d in side_result['angle_data']]
+            right_angles = [d['right_angle'] for d in side_result['angle_data']]
+            
+            # 左肩数据
+            side_data['left_shoulder_data'] = {
+                'max_angle': round(max(left_angles), 2),
+                'min_angle': round(min(left_angles), 2),
+                'avg_angle': round(np.mean(left_angles), 2),
+                'angle_range': round(max(left_angles) - min(left_angles), 2)
+            }
+            
+            # 右肩数据
+            side_data['right_shoulder_data'] = {
+                'max_angle': round(max(right_angles), 2),
+                'min_angle': round(min(right_angles), 2),
+                'avg_angle': round(np.mean(right_angles), 2),
+                'angle_range': round(max(right_angles) - min(right_angles), 2)
+            }
+            
+            # 计算速度数据
+            if side_result.get('velocity_data'):
+                left_velocities = [d['left_velocity'] for d in side_result['velocity_data']]
+                right_velocities = [d['right_velocity'] for d in side_result['velocity_data']]
+                
+                # 分阶段速度数据（0-45°, 45-90°, 90-135°, 135-180°）
+                left_velocity_stages = self.calculate_stage_velocities(left_angles, left_velocities)
+                right_velocity_stages = self.calculate_stage_velocities(right_angles, right_velocities)
+                
+                side_data['left_shoulder_data']['velocity_stages'] = left_velocity_stages
+                side_data['right_shoulder_data']['velocity_stages'] = right_velocity_stages
+                side_data['left_shoulder_data']['max_velocity'] = round(max(abs(v) for v in left_velocities), 2)
+                side_data['right_shoulder_data']['max_velocity'] = round(max(abs(v) for v in right_velocities), 2)
+        
+        return side_data
+    
+    def _process_wrist_data(self, back_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        处理后视手腕数据
+        
+        Args:
+            back_result: 后视分析结果
+            
+        Returns:
+            Dict[str, Any]: 处理后的手腕数据
+        """
+        wrist_data = {}
+        
+        if back_result.get('wrist_height_data'):
+            left_heights = [d['left_wrist_height'] for d in back_result['wrist_height_data']]
+            right_heights = [d['right_wrist_height'] for d in back_result['wrist_height_data']]
+            
+            wrist_data = {
+                'left_max_height': round(max(left_heights), 2),
+                'right_max_height': round(max(right_heights), 2),
+                'left_avg_height': round(np.mean(left_heights), 2),
+                'right_avg_height': round(np.mean(right_heights), 2)
+            }
+        
+        return wrist_data
     
     def calculate_stage_velocities(self, angles: List[float], velocities: List[float]) -> List[float]:
         """
@@ -357,31 +455,65 @@ class DataProcessor:
         score = 0
         total_indicators = 0
         
-        if processed_data.get('left_shoulder_data'):
-            left_data = processed_data['left_shoulder_data']
+        # 处理前视数据（外展运动）
+        if processed_data.get('front_shoulder_data'):
+            front_data = processed_data['front_shoulder_data']
+            left_data = front_data.get('left_shoulder_data', {})
+            right_data = front_data.get('right_shoulder_data', {})
+            
             if 'max_angle' in left_data:
-                # 角度评分（满分30分）
-                angle_score = min(30, left_data['max_angle'] / 180 * 30)
+                # 前视左肩角度评分（满分15分）
+                angle_score = min(15, left_data['max_angle'] / 180 * 15)
                 score += angle_score
-                total_indicators += 30
+                total_indicators += 15
             
             if 'max_velocity' in left_data:
-                # 速度评分（满分35分）
-                velocity_score = min(35, left_data['max_velocity'] / 10 * 35)
+                # 前视左肩速度评分（满分17.5分）
+                velocity_score = min(17.5, left_data['max_velocity'] / 10 * 17.5)
                 score += velocity_score
-                total_indicators += 35
-        
-        if processed_data.get('right_shoulder_data'):
-            right_data = processed_data['right_shoulder_data']
+                total_indicators += 17.5
+            
             if 'max_angle' in right_data:
-                angle_score = min(30, right_data['max_angle'] / 180 * 30)
+                # 前视右肩角度评分（满分15分）
+                angle_score = min(15, right_data['max_angle'] / 180 * 15)
                 score += angle_score
-                total_indicators += 30
+                total_indicators += 15
             
             if 'max_velocity' in right_data:
-                velocity_score = min(35, right_data['max_velocity'] / 10 * 35)
+                # 前视右肩速度评分（满分17.5分）
+                velocity_score = min(17.5, right_data['max_velocity'] / 10 * 17.5)
                 score += velocity_score
-                total_indicators += 35
+                total_indicators += 17.5
+        
+        # 处理侧视数据（前屈运动）
+        if processed_data.get('side_shoulder_data'):
+            side_data = processed_data['side_shoulder_data']
+            left_data = side_data.get('left_shoulder_data', {})
+            right_data = side_data.get('right_shoulder_data', {})
+            
+            if 'max_angle' in left_data:
+                # 侧视左肩角度评分（满分15分）
+                angle_score = min(15, left_data['max_angle'] / 180 * 15)
+                score += angle_score
+                total_indicators += 15
+            
+            if 'max_velocity' in left_data:
+                # 侧视左肩速度评分（满分17.5分）
+                velocity_score = min(17.5, left_data['max_velocity'] / 10 * 17.5)
+                score += velocity_score
+                total_indicators += 17.5
+            
+            if 'max_angle' in right_data:
+                # 侧视右肩角度评分（满分15分）
+                angle_score = min(15, right_data['max_angle'] / 180 * 15)
+                score += angle_score
+                total_indicators += 15
+            
+            if 'max_velocity' in right_data:
+                # 侧视右肩速度评分（满分17.5分）
+                velocity_score = min(17.5, right_data['max_velocity'] / 10 * 17.5)
+                score += velocity_score
+                total_indicators += 17.5
         
         # 计算最终评分
         if total_indicators > 0:

@@ -2,7 +2,7 @@
   "patient_info": {
     "id": 2,
     "name": "李四",
-    "analysis_time": "2025-07-12 16:12:06",
+    "analysis_time": "2025-07-12 16:32:12",
     "age": 50,
     "gender": "女",
     "height": 159.0,
@@ -14,31 +14,61 @@
     "fill_person": "fy",
     "address": "上海"
   },
-  "left_shoulder_data": {
-    "max_angle": 153.83,
-    "min_angle": 15.33,
-    "avg_angle": 109.63,
-    "angle_range": 138.5,
-    "velocity_stages": [
-      2.7,
-      1.53,
-      1.34,
-      3.1
-    ],
-    "max_velocity": 137.79
+  "front_shoulder_data": {
+    "left_shoulder_data": {
+      "max_angle": 167.99,
+      "min_angle": 21.5,
+      "avg_angle": 105.67,
+      "angle_range": 146.49,
+      "velocity_stages": [
+        0.84,
+        2.67,
+        2.39,
+        0.7
+      ],
+      "max_velocity": 6.34
+    },
+    "right_shoulder_data": {
+      "max_angle": 118.93,
+      "min_angle": 21.87,
+      "avg_angle": 79.49,
+      "angle_range": 97.06,
+      "velocity_stages": [
+        0.8,
+        2.13,
+        0.62,
+        0.0
+      ],
+      "max_velocity": 7.18
+    }
   },
-  "right_shoulder_data": {
-    "max_angle": 100.35,
-    "min_angle": 0.5,
-    "avg_angle": 72.01,
-    "angle_range": 99.84,
-    "velocity_stages": [
-      1.69,
-      1.22,
-      0.36,
-      0.0
-    ],
-    "max_velocity": 3.95
+  "side_shoulder_data": {
+    "left_shoulder_data": {
+      "max_angle": 176.07,
+      "min_angle": 57.7,
+      "avg_angle": 150.81,
+      "angle_range": 118.37,
+      "velocity_stages": [
+        0.0,
+        5.02,
+        0.0,
+        1.45
+      ],
+      "max_velocity": 89.89
+    },
+    "right_shoulder_data": {
+      "max_angle": 171.7,
+      "min_angle": 152.89,
+      "avg_angle": 162.07,
+      "angle_range": 18.81,
+      "velocity_stages": [
+        0.0,
+        0.0,
+        0.0,
+        0.78
+      ],
+      "max_velocity": 4.79
+    }
   },
   "wrist_data": {
     "left_max_height": 2.7,
@@ -47,7 +77,7 @@
     "right_avg_height": 0.29
   },
   "summary": {
-    "function_score": 70.1,
+    "function_score": 78.8,
     "function_assessment": "肩关节运动功能基本正常，存在轻微活动受限，建议进一步观察。",
     "recommendations": [
       "进行肩关节柔韧性训练",
