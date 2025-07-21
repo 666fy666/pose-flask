@@ -1,0 +1,87 @@
+{
+  "patient_info": {
+    "id": 5,
+    "name": "Lcf",
+    "analysis_time": "2025-07-21 12:57:59",
+    "age": 53,
+    "gender": "男",
+    "height": 170.0,
+    "weight": 85.0,
+    "symptoms": "脱臼",
+    "duration": "",
+    "treatment": "",
+    "project": "",
+    "fill_person": "",
+    "address": ""
+  },
+  "front_shoulder_data": {
+    "left_shoulder_data": {
+      "max_angle": 77.03,
+      "min_angle": 58.1,
+      "avg_angle": 50.74,
+      "angle_range": 18.92,
+      "velocity_stages": [
+        15.5,
+        13.65,
+        0.0,
+        0.0
+      ],
+      "max_velocity": 74.11
+    },
+    "right_shoulder_data": {
+      "max_angle": 165.21,
+      "min_angle": 151.92,
+      "avg_angle": 126.44,
+      "angle_range": 13.29,
+      "velocity_stages": [
+        40.18,
+        101.91,
+        74.22,
+        15.28
+      ],
+      "max_velocity": 181.45
+    }
+  },
+  "side_shoulder_data": {
+    "left_shoulder_data": {
+      "max_angle": 61.47,
+      "min_angle": 46.82,
+      "avg_angle": 38.46,
+      "angle_range": 14.65,
+      "velocity_stages": [
+        16.67,
+        9.78,
+        0.0,
+        0.0
+      ],
+      "max_velocity": 66.86
+    },
+    "right_shoulder_data": {
+      "max_angle": 157.49,
+      "min_angle": 128.08,
+      "avg_angle": 120.89,
+      "angle_range": 29.41,
+      "velocity_stages": [
+        75.17,
+        53.26,
+        34.28,
+        40.07
+      ],
+      "max_velocity": 3840.03
+    }
+  },
+  "wrist_data": {
+    "left_max_height": 0.26,
+    "right_max_height": 0.56,
+    "left_avg_height": 0.16,
+    "right_avg_height": 0.34
+  },
+  "summary": {
+    "function_score": 0,
+    "function_assessment": "功能开发中",
+    "recommendations": [
+      "功能开发中",
+      "尚未实现"
+    ]
+  }
+}

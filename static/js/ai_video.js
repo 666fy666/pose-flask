@@ -2359,6 +2359,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (Math.abs(percent - startPercent) < Math.abs(percent - endPercent)) {
                 // 更接近开始滑块
                 timelineData[angle].start = Math.max(0, Math.min(time, timelineData[angle].end - 1));
+                // 同步视频播放位置到开始时间点
+                syncVideoToStartTime(angle, timelineData[angle].start);
             } else {
                 // 更接近结束滑块
                 timelineData[angle].end = Math.max(timelineData[angle].start + 1, Math.min(time, timelineData[angle].duration));
@@ -2386,6 +2388,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.dragHandle === 'start') {
                 data.start = Math.max(0, Math.min(time, data.end - 1));
+                // 同步视频播放位置到开始时间点
+                syncVideoToStartTime(angle, data.start);
             } else if (data.dragHandle === 'end') {
                 data.end = Math.max(data.start + 1, Math.min(time, data.duration));
             }
@@ -2407,6 +2411,20 @@ document.addEventListener('DOMContentLoaded', function() {
         document.removeEventListener('mouseup', handleTimelineDragEnd);
     }
     
+    // 同步视频播放位置到开始时间点
+    function syncVideoToStartTime(angle, startTime) {
+        const video = document.getElementById(`${angle}VideoPreview`);
+        if (!video) return;
+        
+        // 设置视频播放位置到开始时间点
+        video.currentTime = startTime;
+        
+        // 暂停视频播放
+        video.pause();
+        
+        console.log(`${angle}角度视频已同步到开始时间点: ${formatTime(startTime)}`);
+    }
+    
     // 格式化时间显示
     function formatTime(seconds) {
         const mins = Math.floor(seconds / 60);
@@ -2420,6 +2438,10 @@ document.addEventListener('DOMContentLoaded', function() {
         data.start = 0;
         data.end = data.duration;
         updateTimelineUI(angle);
+        
+        // 同步视频播放位置到开始时间点（0秒）
+        syncVideoToStartTime(angle, 0);
+        
         showAlert(`${getAngleName(angle)}视频时间轴已重置`, 'success');
     };
     

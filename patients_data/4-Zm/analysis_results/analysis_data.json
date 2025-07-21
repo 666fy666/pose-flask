@@ -1,0 +1,87 @@
+{
+  "patient_info": {
+    "id": 4,
+    "name": "Zm",
+    "analysis_time": "2025-07-17 11:16:42",
+    "age": 45,
+    "gender": "女",
+    "height": 158.0,
+    "weight": 62.0,
+    "symptoms": "疼痛",
+    "duration": "",
+    "treatment": "",
+    "project": "",
+    "fill_person": "",
+    "address": ""
+  },
+  "front_shoulder_data": {
+    "left_shoulder_data": {
+      "max_angle": 167.13,
+      "min_angle": 139.84,
+      "avg_angle": 111.6,
+      "angle_range": 27.29,
+      "velocity_stages": [
+        41.82,
+        125.59,
+        96.34,
+        22.26
+      ],
+      "max_velocity": 258.74
+    },
+    "right_shoulder_data": {
+      "max_angle": 166.15,
+      "min_angle": 142.46,
+      "avg_angle": 112.22,
+      "angle_range": 23.69,
+      "velocity_stages": [
+        35.72,
+        161.81,
+        115.66,
+        21.64
+      ],
+      "max_velocity": 254.1
+    }
+  },
+  "side_shoulder_data": {
+    "left_shoulder_data": {
+      "max_angle": 172.46,
+      "min_angle": 87.99,
+      "avg_angle": 116.27,
+      "angle_range": 84.48,
+      "velocity_stages": [
+        107.37,
+        276.71,
+        69.59,
+        246.94
+      ],
+      "max_velocity": 4221.47
+    },
+    "right_shoulder_data": {
+      "max_angle": 123.82,
+      "min_angle": 88.32,
+      "avg_angle": 76.73,
+      "angle_range": 35.5,
+      "velocity_stages": [
+        31.32,
+        28.51,
+        23.02,
+        0.0
+      ],
+      "max_velocity": 215.16
+    }
+  },
+  "wrist_data": {
+    "left_max_height": 0.55,
+    "right_max_height": 0.72,
+    "left_avg_height": 0.26,
+    "right_avg_height": 0.35
+  },
+  "summary": {
+    "function_score": 0,
+    "function_assessment": "功能开发中",
+    "recommendations": [
+      "功能开发中",
+      "尚未实现"
+    ]
+  }
+}

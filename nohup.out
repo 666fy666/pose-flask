@@ -14883,3 +14883,56 @@ Speed: 0.7ms preprocess, 1.8ms inference, 0.5ms postprocess per image at shape (
  * Restarting with watchdog (inotify)
  * Debugger is active!
  * Debugger PIN: 760-127-458
+ * Serving Flask app 'app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5050
+ * Running on http://192.168.0.108:5050
+Press CTRL+C to quit
+ * Restarting with watchdog (inotify)
+ * Debugger is active!
+ * Debugger PIN: 818-632-600
+112.64.120.5 - - [19/Jul/2025 23:57:53] "GET / HTTP/1.1" 302 -
+112.64.120.5 - - [19/Jul/2025 23:57:53] "GET /login HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:57:53] "GET /static/css/style.css HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:57:56] "GET /favicon.ico HTTP/1.1" 404 -
+112.64.120.5 - - [19/Jul/2025 23:57:57] "POST /login HTTP/1.1" 302 -
+112.64.120.5 - - [19/Jul/2025 23:57:57] "GET / HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:57:57] "GET /static/css/style.css HTTP/1.1" 304 -
+112.64.120.5 - - [19/Jul/2025 23:57:58] "GET /data_management HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:57:58] "GET /static/css/style.css HTTP/1.1" 304 -
+112.64.120.5 - - [19/Jul/2025 23:57:58] "GET /static/js/data_management.js HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:57:58] "GET /api/patients?page=1&page_size=20&search=&gender=&age_range= HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:58:05] "GET /ai_video HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:58:05] "GET /static/css/style.css HTTP/1.1" 304 -
+112.64.120.5 - - [19/Jul/2025 23:58:05] "GET /static/js/ai_video.js HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:58:05] "GET /api/patients/check_exists HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:58:05] "GET /api/patients/select HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:58:07] "GET /api/patients/select HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:58:08] "GET /api/patients/4/videos/check HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:58:08] "GET /api/patients/4/analysis_history HTTP/1.1" 200 -
+112.64.120.5 - - [19/Jul/2025 23:58:08] "GET /api/patients/4/videos/back.mp4 HTTP/1.1" 206 -
+112.64.120.5 - - [19/Jul/2025 23:58:08] "GET /api/patients/4/videos/side.mp4 HTTP/1.1" 206 -
+112.64.120.5 - - [19/Jul/2025 23:58:08] "GET /api/patients/4/videos/front.mp4 HTTP/1.1" 206 -
+112.64.120.5 - - [19/Jul/2025 23:58:08] "GET /api/patients/4/videos/back.mp4 HTTP/1.1" 206 -
+112.64.120.5 - - [19/Jul/2025 23:58:08] "GET /api/patients/4/videos/back.mp4 HTTP/1.1" 206 -
+112.64.120.5 - - [19/Jul/2025 23:58:17] "GET /api/patients/4/reports/report-Zm-2025-07-17-11-16-42.docx HTTP/1.1" 200 -
+205.210.31.108 - - [20/Jul/2025 04:49:24] "GET / HTTP/1.1" 302 -
+205.210.31.108 - - [20/Jul/2025 04:49:24] "GET /login HTTP/1.1" 200 -
+223.113.128.187 - - [20/Jul/2025 07:41:03] "GET / HTTP/1.1" 302 -
+223.113.128.187 - - [20/Jul/2025 07:41:04] code 400, message Bad request version ('Íf')
+223.113.128.187 - - [20/Jul/2025 07:41:04] "\x16\x03\x01\x00ò\x01\x00\x00î\x03\x03m\x813\x93F[ú \x02à)e6TLR^;N\x1dÍf" HTTPStatus.BAD_REQUEST -
+223.113.128.187 - - [20/Jul/2025 07:41:04] code 400, message Bad HTTP/0.9 request type ('t3')
+223.113.128.187 - - [20/Jul/2025 07:41:04] "t3 12.1.2" HTTPStatus.BAD_REQUEST -
+106.75.66.162 - - [20/Jul/2025 07:42:07] "GET / HTTP/1.1" 302 -
+106.75.66.162 - - [20/Jul/2025 07:42:07] "GET /favicon.ico HTTP/1.1" 404 -
+106.75.66.162 - - [20/Jul/2025 07:42:07] "GET /login/robots.txt HTTP/1.1" 404 -
+106.75.66.162 - - [20/Jul/2025 07:42:07] "GET /login/sitemap.xml HTTP/1.1" 404 -
+106.75.66.162 - - [20/Jul/2025 07:42:08] "GET /login HTTP/1.1" 200 -
+106.75.66.162 - - [20/Jul/2025 07:42:08] "GET /favicon.ico HTTP/1.1" 404 -
+106.75.66.162 - - [20/Jul/2025 07:42:08] "GET /login/sitemap.xml HTTP/1.1" 404 -
+106.75.66.162 - - [20/Jul/2025 07:42:08] "GET /login/robots.txt HTTP/1.1" 404 -
+205.210.31.194 - - [20/Jul/2025 08:09:09] "GET /login HTTP/1.1" 200 -
+198.235.24.75 - - [20/Jul/2025 10:43:54] "GET / HTTP/1.1" 302 -
+198.235.24.75 - - [20/Jul/2025 10:43:55] "GET /login HTTP/1.1" 200 -
