@@ -2,7 +2,7 @@
   "patient_info": {
     "id": 4,
     "name": "Zm",
-    "analysis_time": "2025-07-17 11:16:42",
+    "analysis_time": "2025-07-21 13:22:02",
     "age": 45,
     "gender": "女",
     "height": 158.0,
@@ -21,12 +21,12 @@
       "avg_angle": 111.6,
       "angle_range": 27.29,
       "velocity_stages": [
-        41.82,
-        125.59,
-        96.34,
-        22.26
+        39.27,
+        127.42,
+        95.54,
+        19.22
       ],
-      "max_velocity": 258.74
+      "max_velocity": 137.46
     },
     "right_shoulder_data": {
       "max_angle": 166.15,
@@ -34,12 +34,12 @@
       "avg_angle": 112.22,
       "angle_range": 23.69,
       "velocity_stages": [
-        35.72,
-        161.81,
-        115.66,
-        21.64
+        32.75,
+        153.18,
+        115.41,
+        18.08
       ],
-      "max_velocity": 254.1
+      "max_velocity": 158.52
     }
   },
   "side_shoulder_data": {
@@ -49,12 +49,12 @@
       "avg_angle": 116.27,
       "angle_range": 84.48,
       "velocity_stages": [
-        107.37,
-        276.71,
-        69.59,
-        246.94
+        229.29,
+        110.3,
+        44.32,
+        117.54
       ],
-      "max_velocity": 4221.47
+      "max_velocity": 462.52
     },
     "right_shoulder_data": {
       "max_angle": 123.82,
@@ -62,12 +62,12 @@
       "avg_angle": 76.73,
       "angle_range": 35.5,
       "velocity_stages": [
-        31.32,
-        28.51,
-        23.02,
+        29.48,
+        25.75,
+        15.35,
         0.0
       ],
-      "max_velocity": 215.16
+      "max_velocity": 140.05
     }
   },
   "wrist_data": {

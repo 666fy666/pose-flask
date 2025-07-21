@@ -9,6 +9,7 @@ import pandas as pd
 from typing import Dict, List, Tuple, Optional, Any
 from datetime import datetime
 import os
+from scipy.signal import savgol_filter
 from .font_config import setup_chinese_font, get_font_properties
 
 class DataProcessor:
@@ -73,6 +74,41 @@ class DataProcessor:
             filtered_data.append(sum(window_data) / len(window_data))
         
         return filtered_data
+    
+    def apply_savgol_filter(self, data: List[float], window_length: int = 31, polyorder: int = 5) -> List[float]:
+        """
+        应用Savitzky-Golay滤波，用于平滑角速度曲线
+        
+        Args:
+            data: 原始数据
+            window_length: 窗口长度，必须是奇数，默认21
+            polyorder: 多项式阶数，必须小于window_length，默认5
+            
+        Returns:
+            List[float]: 滤波后的数据
+        """
+        if len(data) < window_length:
+            # 如果数据长度小于窗口长度，使用较小的窗口
+            window_length = len(data) if len(data) % 2 == 1 else len(data) - 1
+            if window_length < 3:
+                return data
+        
+        # 确保窗口长度为奇数
+        if window_length % 2 == 0:
+            window_length -= 1
+        
+        # 确保多项式阶数小于窗口长度
+        if polyorder >= window_length:
+            polyorder = window_length - 1
+        
+        try:
+            # 转换为numpy数组并应用SG滤波
+            data_array = np.array(data)
+            filtered_data = savgol_filter(data_array, window_length, polyorder)
+            return filtered_data.tolist()
+        except Exception as e:
+            print(f"SG滤波失败，使用原始数据: {e}")
+            return data
     
     def generate_charts(self, analysis_results: Dict[str, Any], patient_name: str, shoulder_selection: str = 'left') -> Dict[str, plt.Figure]:
         """
@@ -147,31 +183,35 @@ class DataProcessor:
                         left_velocities = [d['left_velocity'] for d in result['velocity_data']]
                         right_velocities = [d['right_velocity'] for d in result['velocity_data']]
 
+                        # 应用SG滤波平滑角速度曲线
+                        left_velocities_filtered = self.apply_savgol_filter(left_velocities)
+                        right_velocities_filtered = self.apply_savgol_filter(right_velocities)
+
                         # 计算角速度对应的时间轴（角速度数据比角度数据少一帧）
                         velocity_times = [(frame - 1) / fps + analysis_start_time for frame in frames[1:]]
 
                         if angle == 'side' and shoulder_selection == 'left':
                             # 侧面角度且选择左肩：只显示左肩数据
-                            ax2.plot(velocity_times, left_velocities, 'b-', linewidth=2, label='左肩')
+                            ax2.plot(velocity_times, left_velocities_filtered, 'b-', linewidth=2, label='左肩')
                             ax2.set_xlabel('时间 (秒)', fontsize=12)
-                            ax2.set_ylabel('角速度 (度/帧)', fontsize=12)
+                            ax2.set_ylabel('角速度 (度/秒)', fontsize=12)
                             ax2.set_title('侧面角度 - 左肩角速度变化', fontsize=14)
                             ax2.legend(fontsize=10)
                             ax2.grid(True, alpha=0.3)
                         elif angle == 'side' and shoulder_selection == 'right':
                             # 侧面角度且选择右肩：只显示右肩数据
-                            ax2.plot(velocity_times, right_velocities, 'r-', linewidth=2, label='右肩')
+                            ax2.plot(velocity_times, right_velocities_filtered, 'r-', linewidth=2, label='右肩')
                             ax2.set_xlabel('时间 (秒)', fontsize=12)
-                            ax2.set_ylabel('角速度 (度/帧)', fontsize=12)
+                            ax2.set_ylabel('角速度 (度/秒)', fontsize=12)
                             ax2.set_title('侧面角度 - 右肩角速度变化', fontsize=14)
                             ax2.legend(fontsize=10)
                             ax2.grid(True, alpha=0.3)
                         else:
                             # 正面角度或其他情况：显示两条曲线
-                            ax2.plot(velocity_times, left_velocities, 'b-', linewidth=2, label='左肩')
-                            ax2.plot(velocity_times, right_velocities, 'r-', linewidth=2, label='右肩')
+                            ax2.plot(velocity_times, left_velocities_filtered, 'b-', linewidth=2, label='左肩')
+                            ax2.plot(velocity_times, right_velocities_filtered, 'r-', linewidth=2, label='右肩')
                             ax2.set_xlabel('时间 (秒)', fontsize=12)
-                            ax2.set_ylabel('角速度 (度/帧)', fontsize=12)
+                            ax2.set_ylabel('角速度 (度/秒)', fontsize=12)
                             ax2.set_title('正面角度 - 角速度变化' if angle == 'front' else '侧面角度 - 角速度变化', fontsize=14)
                             ax2.legend(fontsize=10)
                             ax2.grid(True, alpha=0.3)
@@ -330,14 +370,18 @@ class DataProcessor:
                 left_velocities = [d['left_velocity'] for d in front_result['velocity_data']]
                 right_velocities = [d['right_velocity'] for d in front_result['velocity_data']]
                 
-                # 分阶段速度数据（0-45°, 45-90°, 90-135°, 135-180°）
-                left_velocity_stages = self.calculate_stage_velocities(left_angles, left_velocities)
-                right_velocity_stages = self.calculate_stage_velocities(right_angles, right_velocities)
+                # 应用SG滤波平滑角速度数据
+                left_velocities_filtered = self.apply_savgol_filter(left_velocities)
+                right_velocities_filtered = self.apply_savgol_filter(right_velocities)
+                
+                # 分阶段速度数据（0-45°, 45-90°, 90-135°, 135-180°）- 使用滤波后的数据
+                left_velocity_stages = self.calculate_stage_velocities(left_angles, left_velocities_filtered)
+                right_velocity_stages = self.calculate_stage_velocities(right_angles, right_velocities_filtered)
                 
                 front_data['left_shoulder_data']['velocity_stages'] = left_velocity_stages
                 front_data['right_shoulder_data']['velocity_stages'] = right_velocity_stages
-                front_data['left_shoulder_data']['max_velocity'] = round(max(abs(v) for v in left_velocities), 2)
-                front_data['right_shoulder_data']['max_velocity'] = round(max(abs(v) for v in right_velocities), 2)
+                front_data['left_shoulder_data']['max_velocity'] = round(max(abs(v) for v in left_velocities_filtered), 2)
+                front_data['right_shoulder_data']['max_velocity'] = round(max(abs(v) for v in right_velocities_filtered), 2)
         
         return front_data
     
@@ -386,14 +430,18 @@ class DataProcessor:
                 left_velocities = [d['left_velocity'] for d in side_result['velocity_data']]
                 right_velocities = [d['right_velocity'] for d in side_result['velocity_data']]
                 
-                # 分阶段速度数据（0-45°, 45-90°, 90-135°, 135-180°）
-                left_velocity_stages = self.calculate_stage_velocities(left_angles, left_velocities)
-                right_velocity_stages = self.calculate_stage_velocities(right_angles, right_velocities)
+                # 应用SG滤波平滑角速度数据
+                left_velocities_filtered = self.apply_savgol_filter(left_velocities)
+                right_velocities_filtered = self.apply_savgol_filter(right_velocities)
+                
+                # 分阶段速度数据（0-45°, 45-90°, 90-135°, 135-180°）- 使用滤波后的数据
+                left_velocity_stages = self.calculate_stage_velocities(left_angles, left_velocities_filtered)
+                right_velocity_stages = self.calculate_stage_velocities(right_angles, right_velocities_filtered)
                 
                 side_data['left_shoulder_data']['velocity_stages'] = left_velocity_stages
                 side_data['right_shoulder_data']['velocity_stages'] = right_velocity_stages
-                side_data['left_shoulder_data']['max_velocity'] = round(max(abs(v) for v in left_velocities), 2)
-                side_data['right_shoulder_data']['max_velocity'] = round(max(abs(v) for v in right_velocities), 2)
+                side_data['left_shoulder_data']['max_velocity'] = round(max(abs(v) for v in left_velocities_filtered), 2)
+                side_data['right_shoulder_data']['max_velocity'] = round(max(abs(v) for v in right_velocities_filtered), 2)
         
         return side_data
     

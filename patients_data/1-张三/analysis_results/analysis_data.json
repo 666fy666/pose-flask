@@ -2,7 +2,7 @@
   "patient_info": {
     "id": 1,
     "name": "张三",
-    "analysis_time": "2025-07-21 12:55:17",
+    "analysis_time": "2025-07-21 13:21:31",
     "age": 66,
     "gender": "男",
     "height": 175.0,
@@ -21,12 +21,12 @@
       "avg_angle": 108.06,
       "angle_range": 51.64,
       "velocity_stages": [
-        21.41,
-        40.89,
-        14.81,
-        14.2
+        20.8,
+        39.75,
+        9.62,
+        8.02
       ],
-      "max_velocity": 120.42
+      "max_velocity": 64.67
     },
     "right_shoulder_data": {
       "max_angle": 87.52,
@@ -34,12 +34,12 @@
       "avg_angle": 77.98,
       "angle_range": 4.37,
       "velocity_stages": [
-        26.55,
-        12.61,
-        15.07,
+        21.94,
+        6.09,
+        2.83,
         0.0
       ],
-      "max_velocity": 147.69
+      "max_velocity": 71.28
     }
   },
   "side_shoulder_data": {
@@ -49,12 +49,12 @@
       "avg_angle": 118.06,
       "angle_range": 32.16,
       "velocity_stages": [
-        78.05,
-        72.79,
-        76.25,
-        62.7
+        167.01,
+        78.73,
+        51.64,
+        50.77
       ],
-      "max_velocity": 3230.18
+      "max_velocity": 332.8
     },
     "right_shoulder_data": {
       "max_angle": 85.12,
@@ -62,12 +62,12 @@
       "avg_angle": 56.76,
       "angle_range": 11.73,
       "velocity_stages": [
-        36.35,
-        32.51,
+        30.71,
+        12.76,
         0.0,
         0.0
       ],
-      "max_velocity": 174.03
+      "max_velocity": 93.67
     }
   },
   "wrist_data": {
